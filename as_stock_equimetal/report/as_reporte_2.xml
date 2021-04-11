@@ -92,7 +92,7 @@
                                         style="width:100%;height:100%;" />
                                         <br/>
                                         <br/>
-                                        <span t-esc="o.as_barcode_1()" />
+                                       <center> <span t-esc="o.as_barcode_1()" /></center> 
                                             <br/>
                                         <br/>
                                         <br/>

@@ -126,14 +126,14 @@ class as_wizard_fromulas_stock(models.Model):
         # tipo 1 move
         if self._context.get('tipo') == 1:
             for contexto_lotes in self.wiz_lineas:
-                for i in range (1,contexto_lotes.as_cantidades):
+                for i in range (0,contexto_lotes.as_cantidades):
                     diccionario.append(contexto_lotes.operacion_move_id.id)
             if diccionario == []:
                 raise UserError("Debe guardar el formulario para generar reporte")
             return self.env.ref('as_stock_equimetal.as_reporte_2').report_action(diccionario)
         else:
             for contexto_lotes in self.wiz_lineas:
-                for i in range (1,contexto_lotes.as_cantidades):
+                for i in range (0,contexto_lotes.as_cantidades):
                     diccionario.append(contexto_lotes.operacion_id.id)
             if diccionario == []:
                 raise UserError("Debe guardar el formulario para generar reporte")

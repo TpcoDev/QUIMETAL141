@@ -99,7 +99,7 @@
                                               <br/>
                                         <br/>
                                         <br/>
-                                        <span t-esc="o.as_barcode_2()" />
+                                        <center><span t-esc="o.as_barcode_2()" /></center>
                                               <br/>
                                         <br/>
 
