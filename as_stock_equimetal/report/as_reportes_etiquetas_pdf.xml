@@ -78,7 +78,7 @@
                             </tr>
                             <tr>
                                 <td style="border-bottom: 1px solid black;">Vencimiento:</td>
-                                <td style="border-bottom: 1px solid black;"><span t-if="o.expiration_date" t-esc="o.expiration_date.strftime('%d/%m/%Y')" /></td>
+                                <td style="border-bottom: 1px solid black;"><span t-if="o.lot_id.expiration_date" t-esc="o.lot_id.expiration_date.strftime('%d/%m/%Y')" /></td>
                             </tr>
                             <tr style="height: 110px">
 
