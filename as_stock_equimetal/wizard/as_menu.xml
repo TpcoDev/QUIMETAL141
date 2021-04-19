@@ -36,9 +36,8 @@
 
                     <field name="product_id" />
                     <field name="operacion_id" />
-                    <field name="operacion_move_id" />
+                    <field name="lots_id" />
                     <field name="as_cantidades" />
-                    <!-- <field name="lots_id" /> -->
 
             </tree>
          </field>
