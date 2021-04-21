@@ -57,7 +57,7 @@ class as_webservice_quimetal(http.Controller):
     def WS001(self, **post):
         post = yaml.load(request.httprequest.data)
         res = {}
-        token = uuid.uuid4().hex
+        as_token = uuid.uuid4().hex
         try:
             uid = request.session.authenticate(post['db'], post['login'], post['password'])
 
@@ -185,19 +185,19 @@ class as_webservice_quimetal(http.Controller):
                 return {
                     "purchase_id": nueva_compra.id,
                     "purchase_name": nueva_compra.name,
-                    "Token": token,
+                    "Token": as_token,
                     "RespCode":0,
                     "RespMessage":"OC creada correctamente",
                     "json_recibido":post
                 }
             else:
                 res['error'] = "Login o Password erroneo"
-                res['Token'] = token
+                res['Token'] = as_token
                 res_json = json.dumps(res)
                 return res_json
         except Exception as e:
             return {
-                    "Token": token,
+                    "Token": as_token,
                     "RespCode":-1,
                     "RespMessage": e
                 }
