@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name' : "Ahorasoft EQUIMETAL stock  customizaciones",
-    'version' : "1.0.2",
+    'version' : "1.0.0",
     'author'  : "Ahorasoft",
     'description': """
 stock equimetal

@@ -5,6 +5,8 @@ import re
 import xlrd
 from xlrd import open_workbook
 import base64
+import math
+from odoo import tools
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -49,6 +51,7 @@ class as_wizard_fromulas_stock(models.Model):
                         total = kg_compra/calculo
                     else:
                         total = kg_compra
+                    total = math.ceil(total)
                     vasl={
                             'product_id': move.product_id.id,
                             'as_cantidades': total,
@@ -71,6 +74,7 @@ class as_wizard_fromulas_stock(models.Model):
                         total = kg_compra/calculo
                     else:
                         total = kg_compra
+                    total = math.ceil(total)
                     vasl={
                             'product_id': move.product_id.id,
                             'operacion_id': move.id,
