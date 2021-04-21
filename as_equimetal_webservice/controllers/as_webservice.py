@@ -180,8 +180,8 @@ class as_webservice_quimetal(http.Controller):
 
                 nueva_compra = request.env['purchase.order'].sudo().create(compra_nueva)
                 
-                res['token'] = token
-                request.session.logout()
+                # res['token'] = token
+                # request.session.logout()
                 return {
                     "purchase_id": nueva_compra.id,
                     "purchase_name": nueva_compra.name,
