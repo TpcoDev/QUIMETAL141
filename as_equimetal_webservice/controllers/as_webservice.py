@@ -194,11 +194,11 @@ class as_webservice_quimetal(http.Controller):
                 res['Token'] = token
                 res_json = json.dumps(res)
                 return res_json
-        except UserError as e:
+        except Exception as e:
             return {
                     "Token": token,
                     "RespCode":-1,
-                    "RespMessage":"Error de conexión"
+                    "RespMessage": e
                 }
 
 def as_convert(txt,digits=50,is_number=False):
