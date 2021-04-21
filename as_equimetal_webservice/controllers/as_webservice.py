@@ -154,7 +154,7 @@ class as_webservice_quimetal(http.Controller):
                                                 ],
                                                 }
                                             )
-                request.env.cr.commit()
+                # request.env.cr.commit()
                 _logger.debug("\n\n\n\n\ncompra_nueva_linea: %s", compra_nueva_linea)
 
                 # Ensamblando la compra
