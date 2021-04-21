@@ -117,7 +117,7 @@ class as_webservice_quimetal(http.Controller):
 
                     # Tratamiento de UOM
                     producto_uom = request.env['uom.uom']
-                    producto_uom_search = producto_uom.sudo().search([('name', 'ilike', linea['MeasureUnit'])])
+                    producto_uom_search = producto_uom.sudo().search([('name', 'ilike', linea['MeasureUnit'])])[0]
                     producto_uom_id = 0
                     if producto_uom_search.id:
                         producto_uom_id = producto_uom_search.id
