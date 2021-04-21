@@ -10,7 +10,11 @@ Webservice dummy equimetal
 Custom module for Latproject
     """,
     'category' : "Sale",
-    'depends' : ["base"],
+    'depends' : [
+        "base",
+        "purchase",
+        "stock"
+        ],
     'website': 'http://www.ahorasoft.com',
     'data' : [
 
