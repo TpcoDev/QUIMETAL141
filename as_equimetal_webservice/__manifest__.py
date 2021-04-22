@@ -13,7 +13,8 @@ Custom module for Latproject
     'depends' : [
         "base",
         "purchase",
-        "stock"
+        "stock",
+        "sale_management"
         ],
     'website': 'http://www.ahorasoft.com',
     'data' : [
