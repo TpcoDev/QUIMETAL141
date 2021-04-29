@@ -55,7 +55,7 @@
                             <tr>
 
                                 <td class="letra" colspan="2" style="line-height: 20px !important"><strong><span
-                                            t-esc="o.product_id.name" /></strong></td>
+                                            t-esc="o.as_get_name_product(o.product_id.name)" /></strong></td>
 
                             </tr>
                             <tr>

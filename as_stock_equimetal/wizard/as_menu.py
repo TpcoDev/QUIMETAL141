@@ -56,6 +56,7 @@ class as_wizard_fromulas_stock(models.Model):
                             'product_id': move.product_id.id,
                             'as_cantidades': total,
                             'lots_id': move.id,
+                            'as_done': kg_compra,
                         }
                     dictlinestock.append([0, 0, vasl])
           
@@ -79,6 +80,8 @@ class as_wizard_fromulas_stock(models.Model):
                             'product_id': move.product_id.id,
                             'operacion_id': move.id,
                             'as_cantidades': total,
+                            'lots_id': move.lot_id.id,
+                            'as_done': move.qty_done,
                         }
                     dictlinestock.append([0, 0, vasl])
 
@@ -133,6 +136,7 @@ class as_wizard_fromulas_lines(models.Model):
     operacion_id = fields.Many2one('stock.move.line', 'Movimiento Linea')
     operacion_move_id = fields.Many2one('stock.move', 'Movimiento')
     as_cantidades = fields.Integer(string = 'Cantidades')
+    as_done = fields.Integer(string = 'Realizado')
     lots_id = fields.Many2one('stock.production.lot', 'Lote')
 
 #SELF . WIZ LINE

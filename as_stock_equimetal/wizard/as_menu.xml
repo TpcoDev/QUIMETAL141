@@ -5,7 +5,7 @@
         <field name="name">as_wizard_formulas</field>
         <field name="model">as.wizard.formulas</field>
         <field name="arch" type="xml">
-            <form string="Compute Asset">
+            <form string="Compute Asset" create="0">
             <header>
                     <button name="export_pdf" 
                             type="object" 
@@ -37,6 +37,7 @@
                     <field name="product_id" />
                     <field name="operacion_id" />
                     <field name="lots_id" />
+                    <field name="as_done" />
                     <field name="as_cantidades" />
 
             </tree>
