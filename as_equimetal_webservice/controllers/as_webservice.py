@@ -326,7 +326,6 @@ class as_webservice_quimetal(http.Controller):
 
                         nueva_venta = request.env['sale.order'].sudo().create(venta_nueva)
                         
-                        nueva_compra = request.env['purchase.order'].sudo().create(compra_nueva)
                         self.create_message_log("ws016",as_token,post,'ACEPTADO','OC recibidas correctamente')
                         return mensaje_correcto
                     else:
@@ -377,7 +376,7 @@ class as_webservice_quimetal(http.Controller):
                     for linea in post['params']:
                         docdate = post['params']['DocDate'].replace("T"," ")
                         sp = request.env['stock.picking']
-                        sp_search = sp.sudo().search([('origin', '=', post['params']['DocNum'])])
+                        sp_search = sp.sudo().search([('name', '=', post['params']['DocNum'])])
                         if not sp_search:
                             #se seleccionan las ubicaciones si no esxiste se crea y se retorna el ID
                             slo = self.as_get_id('stock.location',post['params']['WarehouseCodeOrigin'])
@@ -388,6 +387,7 @@ class as_webservice_quimetal(http.Controller):
                                     'date': docdate,
                                     'date_done': docdate,
                                     'location_dest_id': sld,
+                                    'name': post['params']['DocNum'],
                                     'origin': post['params']['DocNum'],
                                     'picking_type_id': picking_type_id.id,
                                     "company_id": request.env.user.company_id.id,
@@ -476,7 +476,7 @@ class as_webservice_quimetal(http.Controller):
         
     def as_get_product_id(self,linea,uom_id):
         producto = request.env['product.template']
-        producto_search = producto.sudo().search([('default_code', 'ilike', linea['ItemCode'])])
+        producto_search = producto.sudo().search([('default_code', '=', linea['ItemCode'])])
         if producto_search.id:
             producto_id = producto_search.id
             product_product = request.env['product.product'].sudo().search([('product_tmpl_id', '=', producto_id)])[0]
