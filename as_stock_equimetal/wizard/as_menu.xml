@@ -35,7 +35,7 @@
             <tree editable="bottom">
 
                     <field name="product_id" />
-                    <field name="operacion_id" />
+                    <field name="operacion_id" invisible="True"/>
                     <field name="lots_id" />
                     <field name="as_done" />
                     <field name="as_cantidades" />

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+from datetime import timedelta, datetime, date
 
 class StockMoveLine(models.Model):
     _inherit = 'stock.move.line'
@@ -14,7 +15,7 @@ class StockMoveLine(models.Model):
         fecha_vencimiento = ''
         for line in self:
             if line.lot_id.expiration_date:
-                fecha_vencimiento = line.lot_id.expiration_date.strftime('%y%m%d')
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
         return fecha_vencimiento
 
     def as_barcode_mpp_1(self):
@@ -22,7 +23,7 @@ class StockMoveLine(models.Model):
         codigo = ''
         for line in self:
             if line.lot_id.expiration_date:
-                fecha_vencimiento = line.lot_id.expiration_date.strftime('%y%m%d')
+                fecha_vencimiento = line.lot_id.expiration_date.strftime('%y%m%-d')
         if self.product_id.barcode:
             codigo += '(01)'+str(self.product_id.barcode)
         if self.as_get_date_lote():
@@ -34,12 +35,29 @@ class StockMoveLine(models.Model):
             codigo+='(17)'+str(fecha_vencimiento)
         return codigo
 
+    def as_barcode_mpp_1_CDB(self):
+        fecha_vencimiento = ''
+        codigo = ''
+        for line in self:
+            if line.lot_id.expiration_date:
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
+        if self.product_id.barcode:
+            codigo += '01'+str(self.product_id.barcode)+'\x1D'
+        if self.as_get_date_lote():
+            codigo += '10'+str(self.as_get_date_lote())+'\x1D'
+        codigo +='91'+str(self.product_id.default_code)+'\x1D'+'37'+str(int(self.product_id.as_cantidad_unidades))+'\x1D'
+        if self.as_get_peso_neto():
+            codigo +='3101'+str(int(self.as_get_peso_neto()))+'\x1D'
+        if fecha_vencimiento:
+            codigo+='17'+str(fecha_vencimiento)
+        return codigo
+
     def as_barcode_pp_1(self):
         fecha_vencimiento = ''
         codigo = ''
         for line in self:
-            if line.lot_id.create_date:
-                fecha_vencimiento = line.lot_id.create_date.strftime('%y%m%d')
+            if line.expiration_date:
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
         if self.as_get_date_lote():
             codigo += '(10)'+str(self.as_get_date_lote())
         codigo +='(91)'+str(self.product_id.default_code)+'(37)'+str(int(self.product_id.as_cantidad_unidades))
@@ -48,6 +66,22 @@ class StockMoveLine(models.Model):
         if fecha_vencimiento:
             codigo+='(17)'+str(fecha_vencimiento)
         return codigo
+
+    def as_barcode_pp_1_CDB(self):
+        fecha_vencimiento = ''
+        codigo = ''
+        for line in self:
+            if line.expiration_date:
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
+        if self.as_get_date_lote():
+            codigo += '10'+str(self.as_get_date_lote())+'\x1D'
+        codigo +='91'+str(self.product_id.default_code)+'\x1D'+'37'+str(int(self.product_id.as_cantidad_unidades))+'\x1D'
+        if self.as_get_peso_neto():
+            codigo +='3101'+str(int(self.as_get_peso_neto()))+'\x1D'
+        if fecha_vencimiento:
+            codigo+='17'+str(fecha_vencimiento)
+        return codigo
+
 
     def as_get_peso_neto(self):
         peso = False

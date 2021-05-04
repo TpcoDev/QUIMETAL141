@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name' : "Ahorasoft EQUIMETAL stock  customizaciones",
-    'version' : "1.0.1",
+    'version' : "1.0.2",
     'author'  : "Ahorasoft",
     'description': """
 stock equimetal
@@ -17,7 +17,9 @@ Custom module for Latproject
                 'views/as_campos_x.xml',
                 'report/as_reportes_etiquetas_pdf.xml',
                 'report/as_reporte_2.xml',
+                'data/as_template_mail.xml',
                 'views/as_format_report.xml',
+                'views/as_stock_picking.xml',
                 'security/ir.model.access.csv',
              ],
     'demo' : [],
