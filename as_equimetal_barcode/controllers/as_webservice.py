@@ -8,7 +8,6 @@ from odoo.http import request, Response
 import jsonschema
 from jsonschema import validate
 import json
-import yaml
 import logging
 import biip
 _logger = logging.getLogger(__name__)

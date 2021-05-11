@@ -1,3 +1,5 @@
 PyYAML
 tabulate
 pdf417gen
+barcode
+biip
