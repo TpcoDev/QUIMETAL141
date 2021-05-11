@@ -7,7 +7,11 @@ from xlrd import open_workbook
 import base64
 import math
 from odoo import tools
+import barcode
+from barcode.writer import ImageWriter
 import logging
+from io import BytesIO
+import base64
 _logger = logging.getLogger(__name__)
 
 class as_wizard_fromulas_stock(models.Model):
@@ -104,6 +108,11 @@ class as_wizard_fromulas_stock(models.Model):
         if self._context.get('tipo') == 1:
             for contexto_lotes in self.wiz_lineas:
                 if self.modelo != "stock.production.lot":
+                    file_like_object = BytesIO()
+                    EAN = barcode.get_barcode_class('code128')
+                    ean = EAN(contexto_lotes.operacion_id.as_barcode_mpp_1_CDB(), writer=ImageWriter())
+                    ean.write(file_like_object,options={"write_text": False})
+                    contexto_lotes.operacion_id.as_imge = base64.b64encode(file_like_object.getvalue())
                     for i in range (0,contexto_lotes.as_cantidades):
                         diccionario.append(contexto_lotes.operacion_id.id)                    
                 else:

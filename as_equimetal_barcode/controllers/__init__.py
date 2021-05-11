@@ -1,2 +1,1 @@
-# from . import as_estructuras
-# from . import as_webservice
+from . import as_webservice

@@ -93,9 +93,10 @@
                                 <br/>
                                 <br/>
                                 <br/>
-                                    <img t-if="o.product_id.default_code"
+                                    <!-- <img t-if="o.product_id.default_code"
                                         t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('Code128', (o.as_barcode_mpp_1_CDB()), 600, 100)"
-                                        style="width:100%;height:100%;" />
+                                        style="width:100%;height:100%;" /> -->
+                                         <img class="img-fluid" t-attf-src="data:image/*;base64,{{o.as_imge}}" />
                                         <br/>
                                         <br/>
                                        <center> <span style="font-size:11px" t-esc="o.as_barcode_mpp_1()" /></center> 

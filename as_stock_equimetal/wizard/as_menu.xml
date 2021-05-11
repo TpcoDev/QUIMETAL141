@@ -57,7 +57,7 @@
         <field name="context">{"tipo":1}</field>
         <field name="view_id" ref="as_wizard_formulas_view_form"/>
         <field name="target">new</field>
-        <field name="binding_model_id" ref="stock.model_stock_picking" />
+        <field name="binding_model_id" ref="" />
     </record>
 
     <record id="as_action_binding" model="ir.actions.act_window">
@@ -87,7 +87,7 @@
         <field name="context">{"tipo":2}</field>
         <field name="view_id" ref="as_wizard_formulas_view_form"/>
         <field name="target">new</field>
-        <field name="binding_model_id" ref="stock.model_stock_picking" />
+        <field name="binding_model_id" ref="" />
     </record>
 
 </odoo>

@@ -9,7 +9,7 @@ Webservice dummy equimetal
 
 Custom module for Latproject
     """,
-    'category' : "Sale",
+    'category' : "stock",
     'depends' : [
         "web",
         "base",
@@ -24,5 +24,6 @@ Custom module for Latproject
              ],
     'demo' : [],
     'installable': True,
+    'application': True,
     'auto_install': False
 }

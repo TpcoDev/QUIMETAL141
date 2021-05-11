@@ -14,6 +14,7 @@ import jsonschema
 from jsonschema import validate
 import json
 import yaml
+import requests, json
 from . import as_estructuras
 import logging
 _logger = logging.getLogger(__name__)
@@ -70,6 +71,8 @@ class as_webservice_quimetal(http.Controller):
                                 {
                                     "name": post['CardName'],
                                     "vat": post['CardCode'],
+                                    "l10n_latam_identification_type_id": 2,
+                                    "company_type": 'company',
                                 }
                             )
                             cliente_id = cliente_nuevo.id
@@ -96,14 +99,15 @@ class as_webservice_quimetal(http.Controller):
                             else:
                                 product_data = {
                                     "name": str(linea['ItemDescription']) or "",
-                                    "type": "product",
                                     "categ_id": 1,
                                     "default_code": str(linea['ItemCode']) or "",
                                     "barcode": "",
-                                    "list_price": 1,
-                                    "standard_price": 1,
                                     "uom_id": producto_uom_id,
                                     "uom_po_id": producto_uom_id,
+                                    "type": "product",
+                                    "list_price": 1,
+                                    "tracking": 'lot',
+                                    "standard_price": 0,
                                     "purchase_ok": True,
                                     "sale_ok": True,
                                 }
@@ -211,6 +215,8 @@ class as_webservice_quimetal(http.Controller):
                                 {
                                     "name": post['CardName'],
                                     "vat": post['CardCode'],
+                                    "l10n_latam_identification_type_id": 2,
+                                    "company_type": 'company',
                                 }
                             )
                             cliente_id = cliente_nuevo.id
@@ -219,8 +225,6 @@ class as_webservice_quimetal(http.Controller):
                         venta = request.env['sale.order']
                         date_order = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         date_approve = post['DocDate'].replace("T"," ")[:-3]
-                        # date_approve = datetime.strptime(date_approve, '%Y-%m-%d %H:%M:%S')
-                        # date_approve = '2021-04-21 10:00:00'
                         venta_nueva_linea = []
                         for linea in post["DatosProdOV"]:
 
@@ -239,8 +243,9 @@ class as_webservice_quimetal(http.Controller):
                                     "default_code": str(linea['ItemCode']) or "",
                                     "barcode": "",
                                     "list_price": 1,
-                                    "standard_price": 1,
+                                    "standard_price": 0,
                                     "uom_id": 3,
+                                    "tracking": 'lot',
                                     "uom_po_id": 3,
                                     "purchase_ok": True,
                                     "sale_ok": True,
@@ -290,11 +295,6 @@ class as_webservice_quimetal(http.Controller):
                             # 'partner_ref': False, 
                             'currency_id': 2, 
                             'date_order': date_approve,
-                            # 'date_approve': date_approve, 
-                            # 'date_planned': '2021-04-23 10:00:00', 
-                            # 'receipt_reminder_email': False, 
-                            # 'reminder_date_before_receipt': 1, 
-                            # 'notes': post['CardCode'], 
                             'user_id': uid,
                             'company_id': 1, 
                             'payment_term_id': 7, 
@@ -440,7 +440,142 @@ class as_webservice_quimetal(http.Controller):
         except Exception as e:
             self.create_message_log("ws023",as_token,post,'RECHAZADO',str(e))
             return mensaje_error
-    
+
+    @http.route(['/tpco/odoo/ws005',], auth="public", type="json", method=['POST'], csrf=False)
+    def WS005(self, **post):
+        post = yaml.load(request.httprequest.data)
+        res_id =  post['res_id'] 
+        res = {}
+        as_token = uuid.uuid4().hex
+        mensaje_error = {			
+                        "Token": as_token,				
+                        "RespCode":-1,
+                        "RespMessage":"Error de conexión"
+                    }
+        mensaje_correcto = {		
+                    "Token": as_token,					
+                    "RespCode":0,				
+                    "RespMessage":"OT recibidas correctamente"				
+            }
+        try:
+            # myapikey = request.httprequest.headers.get("Authorization")
+            # if not myapikey:
+            #     self.create_message_log("ws005",as_token,post,'RECHAZADO','API KEY no existe')
+            #     return mensaje_error
+            # user_id = request.env["res.users.apikeys"]._check_credentials(scope="rpc", key=myapikey)
+            auth_id = self.as_get_auth()
+            request.uid = request.env.user.id
+            if auth_id:
+                res['token'] = as_token
+                # post = post['params']
+                # request.session.logout()
+                # estructura = self.get_file('ws005.json') COMPLETAR ESQUEMA DE VALIDACION
+                # es_valido = self.validar_json(post, esquema=estructura)
+                es_valido = True
+
+                if es_valido:
+                    sp = request.env['stock.picking']
+                    sp_search = sp.sudo().search([('name', '=', res_id)])
+                    if sp_search:
+                        if not sp_search.as_enviado_sap:
+                            json_res = self.as_assemble_picking_json(sp_search)
+                            # sp_search.as_enviado_sap = True
+                            # ENDPOINT FALTANTE
+                            if json_res != {}:
+                                headerVal = {
+                                    'Authorization': 'Bearer '+str(auth_id)
+                                }
+                                as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
+                                as_url_def=as_url+'/api/Trazabilidad/ProductoRecibido'
+                                r = requests.post(as_url_def, json=json_res, headers=headerVal)
+                                json_rest = json.loads(r.text)
+                                # if r.ok:
+                                #     text = r.text
+                                #     info = json.loads(text)
+                                #     if info['result']['RespCode'] == 0:
+                                #         body =  "<b style='color:green'>EXITOSO ("+'WS005'+")!: </b><br>"
+                                #         body += '<b>'+info['result']['RespMessage']+'</b>'                        
+                                #     else:
+                                #         body =  "<b style='color:red'>ERROR ("+'WS005'+")!: </b><br>"
+                                #         body += '<b>'+info['result']['RespMessage']+'</b>'
+                                # else:
+                                #     body =  "<b style='color:red'>ERROR ("+'WS005'+")!:</b><br> <b> No aceptado por SAP</b><br>" 
+                            # ENDPOINT FALTANTE
+                            self.create_message_log("ws005",as_token,json_rest,'ACEPTADO','OT recibidas correctamente')
+                            return mensaje_correcto
+                        else:
+                            self.create_message_log("ws005",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
+                            return mensaje_error
+                    else:
+                        self.create_message_log("ws005",as_token,post,'RECHAZADO','El registro que desea enviar no existe.')
+                        return mensaje_error                        
+                else:
+                    self.create_message_log("ws005",as_token,post,'RECHAZADO','Estructura del Json Invalida')
+                    return mensaje_error
+            else:
+                self.create_message_log("ws005",as_token,post,'RECHAZADO','Autenticación fallida')
+                return mensaje_error
+        except Exception as e:
+            self.create_message_log("ws005",as_token,post,'RECHAZADO',str(e))
+            return mensaje_error
+
+    def as_get_auth(self):
+        as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
+        as_url_def=as_url+'/api/Usuarios/Login'
+        as_login = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_login')
+        as_password = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_password')
+        requestBody = {
+            'usuario': as_login,
+            'password': as_password,
+        }
+        try:
+            r = requests.post(as_url_def, json=requestBody, headers={})
+            if r.ok:
+                text = r.text
+                info = json.loads(text)
+                if info['token']:
+                    token =  info['token']                    
+                else:
+                    token =  False
+        except Exception as e:
+            token =  False
+        return token
+
+    def as_assemble_picking_json(self,picking):
+        picking_line = []
+        vals_picking_line = {}
+
+        #se ensamblan los stock.move
+        for move_stock in picking.move_ids_without_package:
+            move = []
+            vals_move_line = {}
+            for move_line in move_stock.move_line_ids:
+                vals_move_line.update({
+					"DistNumber": move_line.lot_id.name,
+					"Quantity": move_line.qty_done,
+					"DateProduction": str(move_line.lot_id.create_date),
+					"DateExpiration":  str(move_line.lot_id.create_date),
+				})
+                move.append(vals_move_line)
+            vals_picking_line.update({
+                "ItemCode": move_stock.product_id.default_code,
+                "ItemDescription": move_stock.product_id.name,
+                "Quantity": move_stock.quantity_done,
+                "MeasureUnit": move_stock.product_uom.name,
+                "Detalle": move,
+            })
+            picking_line.append(vals_picking_line)
+        vals_picking = {
+            "DocNum": picking.name,
+            "DocDate": str(picking.date_done),
+            "WarehouseCodeOrigin": picking.location_id.name,
+            "WarehouseCodeDestination": picking.location_dest_id.name,
+            "CardCode": picking.partner_id.vat,
+            "CardName": picking.partner_id.name,
+            "DatosProdOT": picking_line,
+        }
+        return vals_picking
+
     def as_get_id(self,model,value):
         rw = request.env[model].sudo().search([('name','=',value)])
         rw_id = 0
@@ -489,7 +624,7 @@ class as_webservice_quimetal(http.Controller):
                 "default_code": str(linea['ItemCode']) or "",
                 "barcode": "",
                 "list_price": 1,
-                "standard_price": 1,
+                "standard_price": 0,
                 "uom_id": uom_id,
                 "uom_po_id": uom_id,
                 "purchase_ok": True,

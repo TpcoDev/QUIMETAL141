@@ -4,6 +4,8 @@ from odoo import models, fields, api
 class StockMoveLine(models.Model):
     _inherit = 'stock.picking'
 
+    partner_id = fields.Many2one(  'res.partner', 'Contact', check_company=True, states={'cancel': [('readonly', True)]})
+
     def action_picking_send(self):
         ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
         self.ensure_one()
@@ -33,5 +35,9 @@ class StockMoveLine(models.Model):
         }
 
     def _find_mail_template(self, force_confirmation_template=False):
-        template_id = self.env['ir.model.data'].xmlid_to_res_id('as_stock_equimetal.stock_picking_mail_template', raise_if_not_found=False)
+        if self.location_id.as_plantilla == '1':
+            template_id = self.env['ir.model.data'].xmlid_to_res_id('as_stock_equimetal.stock_picking_mail_templateD', raise_if_not_found=False)
+        else:
+            template_id = self.env['ir.model.data'].xmlid_to_res_id('as_stock_equimetal.stock_picking_mail_templateO', raise_if_not_found=False)
+
         return template_id

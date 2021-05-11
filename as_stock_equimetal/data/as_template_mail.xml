@@ -2,24 +2,55 @@
 <odoo>
     <data>
 
-        <record id="stock_picking_mail_template" model="mail.template">
-            <field name="name">Notificación de Transferencia</field>
+        <record id="stock_picking_mail_templateD" model="mail.template">
+            <field name="name">Notificación DESTINO = QA</field>
             <field name="model_id" ref="stock.model_stock_picking" />
-            <field name="subject">Se ha registrado la transferencia ${object.name}</field>
-            <field name="email_from">${(object.company_id.partner_id.email}</field>
-            <field name="email_to">${(object.partner_id.email}</field>
+            <field name="subject">Para Revisar de ${object.partner_id.name}/ ref(${object.name}) de ${object.date_done}</field>
+            <field name="email_from">${object.company_id.partner_id.email}</field>
+            <field name="email_to">${object.partner_id.email}</field>
             <field name="body_html" type="html">
                 <div>
-                    Dear ${object.name},<br />
-                    Thank you for your inquiry.<br />
-                    hola mundo desde ODOO
+                    Estimado(s)
+                    % if object.partner_id.parent_id:
+                        ${object.partner_id.name} (${object.partner_id.parent_id.name}),
+                    % else:
+                        ${object.partner_id.name},
+                    % endif
+                    <br /><br />
+                    Aqui se adjunta la transacción ${object.l10n_latam_document_number} <br />
+                    No dude en contactarnos si tiene cualquier consulta.<br />
 
                 </div>
             </field>
-            <field name="report_template" ref="stock.action_report_picking" />
+            <!-- <field name="report_template" ref="stock.action_report_picking" />
             <field name="report_name">Guia_despacho_${(object.name or '').replace('/','_')}</field>
             <field name="lang">${object.partner_id.lang}</field>
-            <field name="auto_delete" eval="True" />
+            <field name="auto_delete" eval="True" /> -->
+        </record>
+        <record id="stock_picking_mail_templateO" model="mail.template">
+            <field name="name">Notificación ORIGEN = QA</field>
+            <field name="model_id" ref="stock.model_stock_picking" />
+            <field name="subject">Para Revisar de ${object.partner_id.name}/ ref(${object.name}) de ${object.date_done}</field>
+            <field name="email_from">${object.company_id.partner_id.email}</field>
+            <field name="email_to">${object.partner_id.email}</field>
+            <field name="body_html" type="html">
+                <div>
+                    Estimado(s)
+                    % if object.partner_id.parent_id:
+                        ${object.partner_id.name} (${object.partner_id.parent_id.name}),
+                    % else:
+                        ${object.partner_id.name},
+                    % endif
+                    <br /><br />
+                    Aqui se adjunta la transacción ${object.l10n_latam_document_number} que informa resultado de revisión de calidad. <br />
+                    No dude en contactarnos si tiene cualquier consulta.<br />
+
+                </div>
+            </field>
+            <!-- <field name="report_template" ref="stock.action_report_picking" />
+            <field name="report_name">Guia_despacho_${(object.name or '').replace('/','_')}</field>
+            <field name="lang">${object.partner_id.lang}</field>
+            <field name="auto_delete" eval="True" /> -->
         </record>
     </data>
 </odoo>
