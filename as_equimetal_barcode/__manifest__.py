@@ -20,7 +20,7 @@ Custom module for Latproject
     'website': 'http://www.ahorasoft.com',
     'data' : [
             # 'security/ir.model.access.csv',
-            'views/interface.xml',
+            'views/templates.xml',
              ],
     'demo' : [],
     'installable': True,
