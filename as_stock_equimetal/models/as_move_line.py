@@ -69,33 +69,35 @@ class StockMoveLine(models.Model):
         return codigo
 
     def as_barcode_pp_1(self):
-        fecha_vencimiento = ''
+        fecha_production = ''
         codigo = ''
         for line in self:
-            if line.expiration_date:
-                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
+            if line.create_date:
+                fecha_production = (line.create_date-timedelta(hours=4)).strftime('%y%m%-d')
         if self.as_get_date_lote():
             codigo += '(10)'+str(self.as_get_date_lote())
-        codigo +='(91)'+str(self.product_id.default_code)+'(37)'+str(int(self.product_id.as_cantidad_unidades))
-        if self.as_get_peso_neto():
-            codigo +='(3101)'+str(int(self.as_get_peso_neto()))
-        if fecha_vencimiento:
-            codigo+='(17)'+str(fecha_vencimiento)
+        codigo +='(91)'+str(self.product_id.default_code)
+        # +'(37)'+str(int(self.product_id.as_cantidad_unidades))
+        # if self.as_get_peso_neto():
+        #     codigo +='(3101)'+str(int(self.as_get_peso_neto()))
+        if fecha_production:
+            codigo+='(11)'+str(fecha_production)
         return codigo
 
     def as_barcode_pp_1_CDB(self):
-        fecha_vencimiento = ''
+        fecha_production = ''
         codigo = ''
         for line in self:
-            if line.expiration_date:
-                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
+            if line.create_date:
+                fecha_production = (line.create_date-timedelta(hours=4)).strftime('%y%m%-d')
         if self.as_get_date_lote():
-            codigo += '10'+str(self.as_get_date_lote())+'\x1d'
-        codigo +='91'+str(self.product_id.default_code)+'\x1d'+'37'+str(int(self.product_id.as_cantidad_unidades))+'\x1d'
-        if self.as_get_peso_neto():
-            codigo +='3101'+str(int(self.as_get_peso_neto()))+'\x1d'
-        if fecha_vencimiento:
-            codigo+='17'+str(fecha_vencimiento)
+            codigo += '10'+str(self.as_get_date_lote_SC())+'\x1d'
+        codigo +='91'+str(self.product_id.default_code)+'\x1d'
+        # +'37'+str(int(self.product_id.as_cantidad_unidades))+'\x1d'
+        # if self.as_get_peso_neto():
+        #     codigo +='3101'+str(int(self.as_get_peso_neto()))+'\x1d'
+        if fecha_production:
+            codigo+='11'+str(fecha_production)
         return codigo
 
 

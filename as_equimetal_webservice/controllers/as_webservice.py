@@ -489,20 +489,16 @@ class as_webservice_quimetal(http.Controller):
                                 as_url_def=as_url+'/api/Trazabilidad/ProductoRecibido'
                                 r = requests.post(as_url_def, json=json_res, headers=headerVal)
                                 json_rest = json.loads(r.text)
-                                # if r.ok:
-                                #     text = r.text
-                                #     info = json.loads(text)
-                                #     if info['result']['RespCode'] == 0:
-                                #         body =  "<b style='color:green'>EXITOSO ("+'WS005'+")!: </b><br>"
-                                #         body += '<b>'+info['result']['RespMessage']+'</b>'                        
-                                #     else:
-                                #         body =  "<b style='color:red'>ERROR ("+'WS005'+")!: </b><br>"
-                                #         body += '<b>'+info['result']['RespMessage']+'</b>'
-                                # else:
-                                #     body =  "<b style='color:red'>ERROR ("+'WS005'+")!:</b><br> <b> No aceptado por SAP</b><br>" 
+                                status = ''
+                                body = ''
+                                info = json.loads(r.text)
+                                if r.ok:
+                                    self.create_message_log("ws005",as_token,info,'ACEPTADO','OT recibidas correctamente')
+                                    return mensaje_correcto
+                                else:
+                                    self.create_message_log("ws005",as_token,info,'RECHAZADO','El JSON fue rechazado.')
+                                    return mensaje_error
                             # ENDPOINT FALTANTE
-                            self.create_message_log("ws005",as_token,json_rest,'ACEPTADO','OT recibidas correctamente')
-                            return mensaje_correcto
                         else:
                             self.create_message_log("ws005",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
                             return mensaje_error
@@ -551,28 +547,29 @@ class as_webservice_quimetal(http.Controller):
             vals_move_line = {}
             for move_line in move_stock.move_line_ids:
                 vals_move_line.update({
-					"DistNumber": move_line.lot_id.name,
-					"Quantity": move_line.qty_done,
-					"DateProduction": str(move_line.lot_id.create_date),
-					"DateExpiration":  str(move_line.lot_id.create_date),
+					"distNumber": move_line.lot_id.name,
+					"quantity": move_line.qty_done,
+					"dateProduction": str(move_line.lot_id.create_date),
+					"dateExpiration":  str(move_line.lot_id.create_date),
 				})
                 move.append(vals_move_line)
             vals_picking_line.update({
-                "ItemCode": move_stock.product_id.default_code,
-                "ItemDescription": move_stock.product_id.name,
-                "Quantity": move_stock.quantity_done,
-                "MeasureUnit": move_stock.product_uom.name,
-                "Detalle": move,
+                "itemCode": move_stock.product_id.default_code,
+                "itemDescription": move_stock.product_id.name,
+                "quantity": move_stock.quantity_done,
+                "measureUnit": move_stock.product_uom.name,
+                "lote": move,
             })
             picking_line.append(vals_picking_line)
         vals_picking = {
-            "DocNum": picking.name,
-            "DocDate": str(picking.date_done),
-            "WarehouseCodeOrigin": picking.location_id.name,
-            "WarehouseCodeDestination": picking.location_dest_id.name,
-            "CardCode": picking.partner_id.vat,
-            "CardName": picking.partner_id.name,
-            "DatosProdOT": picking_line,
+            "docNum": picking.name,
+            "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S.000Z')),
+            "docNumSAP": int(picking.origin),
+            "warehouseCodeOrigin": picking.location_id.name,
+            "warehouseCodeDestination": picking.location_dest_id.name,
+            "cardCode": picking.partner_id.vat,
+            "cardName": picking.partner_id.name,
+            "detalle": picking_line,
         }
         return vals_picking
 

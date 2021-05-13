@@ -22,7 +22,7 @@ class as_barcode_quimetal(http.Controller):
         barcode = post.get('barcode') or None
         # barcode = '10455 91MPFIL093 3721 310000031517210308'
         try:
-            result = biip.parse(barcode,separator_chars=(' '))
+            result = biip.parse(barcode,separator_chars=('\x1d'))
             lote = result.gs1_message.get(ai="10").value
             product_code = result.gs1_message.get(ai="91").value
             product_id = request.env['product.product'].sudo().search([('default_code','=',product_code)],limit=1)
