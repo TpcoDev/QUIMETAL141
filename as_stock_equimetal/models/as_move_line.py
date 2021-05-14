@@ -29,7 +29,14 @@ class StockMoveLine(models.Model):
         fecha_vencimiento = ''
         for line in self:
             if line.expiration_date:
-                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
+        return fecha_vencimiento
+
+    def as_fecha_vencimientostr(self):
+        fecha_vencimiento = ''
+        for line in self:
+            if line.expiration_date:
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y-%m-%d')
         return fecha_vencimiento
 
     def as_barcode_mpp_1(self):
@@ -37,7 +44,7 @@ class StockMoveLine(models.Model):
         codigo = ''
         for line in self:
             if line.expiration_date:
-                fecha_vencimiento = line.expiration_date.strftime('%y%m%-d')
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
         # if self.product_id.barcode:
         #     codigo += '(01)'+str(self.product_id.barcode)
         if self.as_get_date_lote():
@@ -55,7 +62,7 @@ class StockMoveLine(models.Model):
         codigo = ''
         for line in self:
             if line.expiration_date:
-                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%-d')
+                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
         # if self.product_id.barcode:
         #     codigo += '01'+str(self.product_id.barcode)+'\x1d'
         if self.as_get_date_lote():
@@ -73,7 +80,7 @@ class StockMoveLine(models.Model):
         codigo = ''
         for line in self:
             if line.create_date:
-                fecha_production = (line.create_date-timedelta(hours=4)).strftime('%y%m%-d')
+                fecha_production = (line.create_date-timedelta(hours=4)).strftime('%y%m%d')
         if self.as_get_date_lote():
             codigo += '(10)'+str(self.as_get_date_lote())
         codigo +='(91)'+str(self.product_id.default_code)
@@ -89,7 +96,7 @@ class StockMoveLine(models.Model):
         codigo = ''
         for line in self:
             if line.create_date:
-                fecha_production = (line.create_date-timedelta(hours=4)).strftime('%y%m%-d')
+                fecha_production = (line.create_date-timedelta(hours=4)).strftime('%y%m%d')
         if self.as_get_date_lote():
             codigo += '10'+str(self.as_get_date_lote_SC())+'\x1d'
         codigo +='91'+str(self.product_id.default_code)+'\x1d'

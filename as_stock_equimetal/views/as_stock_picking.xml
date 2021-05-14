@@ -8,8 +8,8 @@
             <field name="arch" type="xml">
                 <xpath expr="//button[@name='button_scrap']" position="after">
                     <button name="action_picking_send" string="Enviar por Correo" type="object" states="done" class="btn-primary"/>
-                    <button class="btn-primary" type="action" name="%(as_action_asset_depreciation_confirmation_wizard)d" icon="fa-print"  string="Impimir MP" states="done,assigned"/>
-                    <button class="btn-primary" type="action" name="%(as_pp_wizard)d" icon="fa-print"  string="Impimir PP" states="done,assigned"/>
+                    <button class="btn-primary" type="action" name="%(as_action_asset_depreciation_confirmation_wizard)d" icon="fa-print"  string="Imprimir MP" states="done,assigned"/>
+                    <button class="btn-primary" type="action" name="%(as_pp_wizard)d" icon="fa-print"  string="Imprimir PP" states="done,assigned"/>
           
                 </xpath>           
             </field>

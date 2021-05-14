@@ -9,6 +9,12 @@
                 <xpath expr="//button[@name='button_scrap']" position="after">
                     <button name="action_picking_sap" string="Enviar SAP" type="object" states="done" class="btn-primary"/>
                    
+                </xpath>       
+                <xpath expr="//field[@name='origin']" position="after">
+                   <field name="as_ot_sap" />
+                   <field name="as_num_factura" />
+                   <field name="as_webservice" />
+                   
                 </xpath>           
             </field>
         </record>

@@ -24,7 +24,14 @@ from dateutil.relativedelta import relativedelta
 import os.path
 from werkzeug import urls
 from werkzeug.wsgi import wrap_file
-
+address_api = {
+    'WS005':'/api/Trazabilidad/ProductoRecibido',
+    'WS004':'/api/Trazabilidad/TransferenciaSF',
+    'WS006':'/api/Trazabilidad/SalidaMMPP',
+    'WS099':'/api/Trazabilidad/RecepcionBodegaDespacho',
+    'WS018':'/api/Trazabilidad/ActualizacionDespacho',
+    'WS021':'/api/Trazabilidad/DevolucionClientes',
+}
 class as_webservice_quimetal(http.Controller):
 
     # WS001, de SAP a ODOO
@@ -458,19 +465,10 @@ class as_webservice_quimetal(http.Controller):
                     "RespMessage":"OT recibidas correctamente"				
             }
         try:
-            # myapikey = request.httprequest.headers.get("Authorization")
-            # if not myapikey:
-            #     self.create_message_log("ws005",as_token,post,'RECHAZADO','API KEY no existe')
-            #     return mensaje_error
-            # user_id = request.env["res.users.apikeys"]._check_credentials(scope="rpc", key=myapikey)
             auth_id = self.as_get_auth()
             request.uid = request.env.user.id
             if auth_id:
                 res['token'] = as_token
-                # post = post['params']
-                # request.session.logout()
-                # estructura = self.get_file('ws005.json') COMPLETAR ESQUEMA DE VALIDACION
-                # es_valido = self.validar_json(post, esquema=estructura)
                 es_valido = True
 
                 if es_valido:
@@ -478,15 +476,13 @@ class as_webservice_quimetal(http.Controller):
                     sp_search = sp.sudo().search([('name', '=', res_id)])
                     if sp_search:
                         if not sp_search.as_enviado_sap:
-                            json_res = self.as_assemble_picking_json(sp_search)
-                            # sp_search.as_enviado_sap = True
-                            # ENDPOINT FALTANTE
+                            json_res = sp_search.as_assemble_picking_json('WS005')
                             if json_res != {}:
                                 headerVal = {
                                     'Authorization': 'Bearer '+str(auth_id)
                                 }
                                 as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
-                                as_url_def=as_url+'/api/Trazabilidad/ProductoRecibido'
+                                as_url_def=as_url+address_api['WS005']
                                 r = requests.post(as_url_def, json=json_res, headers=headerVal)
                                 json_rest = json.loads(r.text)
                                 status = ''
@@ -498,7 +494,6 @@ class as_webservice_quimetal(http.Controller):
                                 else:
                                     self.create_message_log("ws005",as_token,info,'RECHAZADO','El JSON fue rechazado.')
                                     return mensaje_error
-                            # ENDPOINT FALTANTE
                         else:
                             self.create_message_log("ws005",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
                             return mensaje_error
@@ -515,7 +510,319 @@ class as_webservice_quimetal(http.Controller):
             self.create_message_log("ws005",as_token,post,'RECHAZADO',str(e))
             return mensaje_error
 
+    @http.route(['/tpco/odoo/ws004',], auth="public", type="json", method=['POST'], csrf=False)
+    def WS004(self, **post):
+        post = yaml.load(request.httprequest.data)
+        res_id =  post['res_id'] 
+        res = {}
+        as_token = uuid.uuid4().hex
+        mensaje_error = {			
+                        "Token": as_token,				
+                        "RespCode":-1,
+                        "RespMessage":"Error de conexión"
+                    }
+        mensaje_correcto = {		
+                    "Token": as_token,					
+                    "RespCode":0,				
+                    "RespMessage":"OT recibidas correctamente"				
+            }
+        try:
+            auth_id = self.as_get_auth()
+            request.uid = request.env.user.id
+            if auth_id:
+                res['token'] = as_token
+                es_valido = True
+
+                if es_valido:
+                    sp = request.env['stock.picking']
+                    sp_search = sp.sudo().search([('name', '=', res_id)])
+                    if sp_search:
+                        if not sp_search.as_enviado_sap:
+                            json_res = sp_search.as_assemble_picking_json('WS004')
+                            if json_res != {}:
+                                headerVal = {
+                                    'Authorization': 'Bearer '+str(auth_id)
+                                }
+                                as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
+                                as_url_def=as_url+address_api['WS004']
+                                r = requests.post(as_url_def, json=json_res, headers=headerVal)
+                                json_rest = json.loads(r.text)
+                                status = ''
+                                body = ''
+                                info = json.loads(r.text)
+                                if r.ok:
+                                    self.create_message_log("ws004",as_token,info,'ACEPTADO','OC recibidas correctamente')
+                                    return mensaje_correcto
+                                else:
+                                    self.create_message_log("ws004",as_token,info,'RECHAZADO','El JSON fue rechazado.')
+                                    return mensaje_error
+                        else:
+                            self.create_message_log("ws004",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
+                            return mensaje_error
+                    else:
+                        self.create_message_log("ws004",as_token,post,'RECHAZADO','El registro que desea enviar no existe.')
+                        return mensaje_error                        
+                else:
+                    self.create_message_log("ws004",as_token,post,'RECHAZADO','Estructura del Json Invalida')
+                    return mensaje_error
+            else:
+                self.create_message_log("ws004",as_token,post,'RECHAZADO','Autenticación fallida')
+                return mensaje_error
+        except Exception as e:
+            self.create_message_log("ws004",as_token,post,'RECHAZADO',str(e))
+            return mensaje_error
+
+    @http.route(['/tpco/odoo/ws006',], auth="public", type="json", method=['POST'], csrf=False)
+    def WS006(self, **post):
+        post = yaml.load(request.httprequest.data)
+        res_id =  post['res_id'] 
+        res = {}
+        as_token = uuid.uuid4().hex
+        mensaje_error = {			
+                        "Token": as_token,				
+                        "RespCode":-1,
+                        "RespMessage":"Error de conexión"
+                    }
+        mensaje_correcto = {		
+                    "Token": as_token,					
+                    "RespCode":0,				
+                    "RespMessage":"OT recibidas correctamente"				
+            }
+        try:
+            auth_id = self.as_get_auth()
+            request.uid = request.env.user.id
+            if auth_id:
+                res['token'] = as_token
+                es_valido = True
+
+                if es_valido:
+                    sp = request.env['stock.picking']
+                    sp_search = sp.sudo().search([('name', '=', res_id)])
+                    if sp_search:
+                        if not sp_search.as_enviado_sap:
+                            json_res = sp_search.as_assemble_picking_json('WS006')
+                            if json_res != {}:
+                                headerVal = {
+                                    'Authorization': 'Bearer '+str(auth_id)
+                                }
+                                as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
+                                as_url_def=as_url+address_api['WS006']
+                                r = requests.post(as_url_def, json=json_res, headers=headerVal)
+                                json_rest = json.loads(r.text)
+                                status = ''
+                                body = ''
+                                info = json.loads(r.text)
+                                if r.ok:
+                                    self.create_message_log("ws006",as_token,info,'ACEPTADO','OC recibidas correctamente')
+                                    return mensaje_correcto
+                                else:
+                                    self.create_message_log("ws006",as_token,info,'RECHAZADO','El JSON fue rechazado.')
+                                    return mensaje_error
+                        else:
+                            self.create_message_log("ws006",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
+                            return mensaje_error
+                    else:
+                        self.create_message_log("ws006",as_token,post,'RECHAZADO','El registro que desea enviar no existe.')
+                        return mensaje_error                        
+                else:
+                    self.create_message_log("ws006",as_token,post,'RECHAZADO','Estructura del Json Invalida')
+                    return mensaje_error
+            else:
+                self.create_message_log("ws006",as_token,post,'RECHAZADO','Autenticación fallida')
+                return mensaje_error
+        except Exception as e:
+            self.create_message_log("ws006",as_token,post,'RECHAZADO',str(e))
+            return mensaje_error
+
+    @http.route(['/tpco/odoo/ws099',], auth="public", type="json", method=['POST'], csrf=False)
+    def WS099(self, **post):
+        post = yaml.load(request.httprequest.data)
+        res_id =  post['res_id'] 
+        res = {}
+        as_token = uuid.uuid4().hex
+        mensaje_error = {			
+                        "Token": as_token,				
+                        "RespCode":-1,
+                        "RespMessage":"Error de conexión"
+                    }
+        mensaje_correcto = {		
+                    "Token": as_token,					
+                    "RespCode":0,				
+                    "RespMessage":"OT recibidas correctamente"				
+            }
+        try:
+            auth_id = self.as_get_auth()
+            request.uid = request.env.user.id
+            if auth_id:
+                res['token'] = as_token
+                es_valido = True
+
+                if es_valido:
+                    sp = request.env['stock.picking']
+                    sp_search = sp.sudo().search([('name', '=', res_id)])
+                    if sp_search:
+                        if not sp_search.as_enviado_sap:
+                            json_res = sp_search.as_assemble_picking_json('WS099')
+                            if json_res != {}:
+                                headerVal = {
+                                    'Authorization': 'Bearer '+str(auth_id)
+                                }
+                                as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
+                                as_url_def=as_url+address_api['WS099']
+                                r = requests.post(as_url_def, json=json_res, headers=headerVal)
+                                json_rest = json.loads(r.text)
+                                status = ''
+                                body = ''
+                                info = json.loads(r.text)
+                                if r.ok:
+                                    self.create_message_log("ws099",as_token,info,'ACEPTADO','OC recibidas correctamente')
+                                    return mensaje_correcto
+                                else:
+                                    self.create_message_log("ws099",as_token,info,'RECHAZADO','El JSON fue rechazado.')
+                                    return mensaje_error
+                        else:
+                            self.create_message_log("ws099",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
+                            return mensaje_error
+                    else:
+                        self.create_message_log("ws099",as_token,post,'RECHAZADO','El registro que desea enviar no existe.')
+                        return mensaje_error                        
+                else:
+                    self.create_message_log("ws099",as_token,post,'RECHAZADO','Estructura del Json Invalida')
+                    return mensaje_error
+            else:
+                self.create_message_log("ws099",as_token,post,'RECHAZADO','Autenticación fallida')
+                return mensaje_error
+        except Exception as e:
+            self.create_message_log("ws099",as_token,post,'RECHAZADO',str(e))
+            return mensaje_error
+
+    @http.route(['/tpco/odoo/ws018',], auth="public", type="json", method=['POST'], csrf=False)
+    def WS018(self, **post):
+        post = yaml.load(request.httprequest.data)
+        res_id =  post['res_id'] 
+        res = {}
+        as_token = uuid.uuid4().hex
+        mensaje_error = {			
+                        "Token": as_token,				
+                        "RespCode":-1,
+                        "RespMessage":"Error de conexión"
+                    }
+        mensaje_correcto = {		
+                    "Token": as_token,					
+                    "RespCode":0,				
+                    "RespMessage":"OT recibidas correctamente"				
+            }
+        try:
+            auth_id = self.as_get_auth()
+            request.uid = request.env.user.id
+            if auth_id:
+                res['token'] = as_token
+                es_valido = True
+
+                if es_valido:
+                    sp = request.env['stock.picking']
+                    sp_search = sp.sudo().search([('name', '=', res_id)])
+                    if sp_search:
+                        if not sp_search.as_enviado_sap:
+                            json_res = sp_search.as_assemble_picking_json('WS018')
+                            if json_res != {}:
+                                headerVal = {
+                                    'Authorization': 'Bearer '+str(auth_id)
+                                }
+                                as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
+                                as_url_def=as_url+address_api['WS018']
+                                r = requests.post(as_url_def, json=json_res, headers=headerVal)
+                                json_rest = json.loads(r.text)
+                                status = ''
+                                body = ''
+                                info = json.loads(r.text)
+                                if r.ok:
+                                    self.create_message_log("ws018",as_token,info,'ACEPTADO','OC recibidas correctamente')
+                                    return mensaje_correcto
+                                else:
+                                    self.create_message_log("ws018",as_token,info,'RECHAZADO','El JSON fue rechazado.')
+                                    return mensaje_error
+                        else:
+                            self.create_message_log("ws018",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
+                            return mensaje_error
+                    else:
+                        self.create_message_log("ws018",as_token,post,'RECHAZADO','El registro que desea enviar no existe.')
+                        return mensaje_error                        
+                else:
+                    self.create_message_log("ws018",as_token,post,'RECHAZADO','Estructura del Json Invalida')
+                    return mensaje_error
+            else:
+                self.create_message_log("ws018",as_token,post,'RECHAZADO','Autenticación fallida')
+                return mensaje_error
+        except Exception as e:
+            self.create_message_log("ws018",as_token,post,'RECHAZADO',str(e))
+            return mensaje_error
+
+    @http.route(['/tpco/odoo/ws021',], auth="public", type="json", method=['POST'], csrf=False)
+    def WS021(self, **post):
+        post = yaml.load(request.httprequest.data)
+        res_id =  post['res_id'] 
+        res = {}
+        as_token = uuid.uuid4().hex
+        mensaje_error = {			
+                        "Token": as_token,				
+                        "RespCode":-1,
+                        "RespMessage":"Error de conexión"
+                    }
+        mensaje_correcto = {		
+                    "Token": as_token,					
+                    "RespCode":0,				
+                    "RespMessage":"OT recibidas correctamente"				
+            }
+        try:
+            auth_id = self.as_get_auth()
+            request.uid = request.env.user.id
+            if auth_id:
+                res['token'] = as_token
+                es_valido = True
+
+                if es_valido:
+                    sp = request.env['stock.picking']
+                    sp_search = sp.sudo().search([('name', '=', res_id)])
+                    if sp_search:
+                        if not sp_search.as_enviado_sap:
+                            json_res = sp_search.as_assemble_picking_json('WS021')
+                            if json_res != {}:
+                                headerVal = {
+                                    'Authorization': 'Bearer '+str(auth_id)
+                                }
+                                as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
+                                as_url_def=as_url+address_api['WS021']
+                                r = requests.post(as_url_def, json=json_res, headers=headerVal)
+                                json_rest = json.loads(r.text)
+                                status = ''
+                                body = ''
+                                info = json.loads(r.text)
+                                if r.ok:
+                                    self.create_message_log("ws021",as_token,info,'ACEPTADO','OC recibidas correctamente')
+                                    return mensaje_correcto
+                                else:
+                                    self.create_message_log("ws021",as_token,info,'RECHAZADO','El JSON fue rechazado.')
+                                    return mensaje_error
+                        else:
+                            self.create_message_log("ws021",as_token,post,'RECHAZADO','El documento ya fue enviado a SAP.')
+                            return mensaje_error
+                    else:
+                        self.create_message_log("ws021",as_token,post,'RECHAZADO','El registro que desea enviar no existe.')
+                        return mensaje_error                        
+                else:
+                    self.create_message_log("ws021",as_token,post,'RECHAZADO','Estructura del Json Invalida')
+                    return mensaje_error
+            else:
+                self.create_message_log("ws021",as_token,post,'RECHAZADO','Autenticación fallida')
+                return mensaje_error
+        except Exception as e:
+            self.create_message_log("ws021",as_token,post,'RECHAZADO',str(e))
+            return mensaje_error
+
+
     def as_get_auth(self):
+        token = ''
         as_url = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_url')
         as_url_def=as_url+'/api/Usuarios/Login'
         as_login = request.env['ir.config_parameter'].sudo().get_param('as_equimetal_webservice.as_login')
@@ -536,42 +843,6 @@ class as_webservice_quimetal(http.Controller):
         except Exception as e:
             token =  False
         return token
-
-    def as_assemble_picking_json(self,picking):
-        picking_line = []
-        vals_picking_line = {}
-
-        #se ensamblan los stock.move
-        for move_stock in picking.move_ids_without_package:
-            move = []
-            vals_move_line = {}
-            for move_line in move_stock.move_line_ids:
-                vals_move_line.update({
-					"distNumber": move_line.lot_id.name,
-					"quantity": move_line.qty_done,
-					"dateProduction": str(move_line.lot_id.create_date),
-					"dateExpiration":  str(move_line.lot_id.create_date),
-				})
-                move.append(vals_move_line)
-            vals_picking_line.update({
-                "itemCode": move_stock.product_id.default_code,
-                "itemDescription": move_stock.product_id.name,
-                "quantity": move_stock.quantity_done,
-                "measureUnit": move_stock.product_uom.name,
-                "lote": move,
-            })
-            picking_line.append(vals_picking_line)
-        vals_picking = {
-            "docNum": picking.name,
-            "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S.000Z')),
-            "docNumSAP": int(picking.origin),
-            "warehouseCodeOrigin": picking.location_id.name,
-            "warehouseCodeDestination": picking.location_dest_id.name,
-            "cardCode": picking.partner_id.vat,
-            "cardName": picking.partner_id.name,
-            "detalle": picking_line,
-        }
-        return vals_picking
 
     def as_get_id(self,model,value):
         rw = request.env[model].sudo().search([('name','=',value)])

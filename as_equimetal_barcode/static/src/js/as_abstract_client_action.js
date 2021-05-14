@@ -29,7 +29,7 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
         this.currentStep = 'product';
         this.stepState = $.extend(true, {}, this.currentState);
         var errorMessage;
-
+        console.log('Enro aqui primero')
         var product = this._isProduct(barcode);
         if (product) {
             if (product.tracking !== 'none' && self.requireLotNumber) {
@@ -107,6 +107,7 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
          */
         _step_lot: function (barcode, linesActions) {
             
+            
             if (! this.groups.group_production_lot) {
                 return Promise.reject();
             }
@@ -122,6 +123,7 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
             } else if (this.locationsByBarcode[barcode]) {
                 return this._step_destination(barcode, linesActions);
             }
+            console.log('Enro aqui segundo'+barcode)
     
             var getProductFromLastScannedLine = function () {
                 if (self.scannedLines.length) {
@@ -241,7 +243,7 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
                         };
                     }
                 });
-                
+                window.as_jason =vals_resp;
                 return vals_resp;
             
             };
@@ -254,7 +256,7 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
             }
             
             var searchRead = function (barcode) {
-                
+                console.log('Enro aqui tercero'+barcode)
                 var debug_gs1 = urlParam('debug_gs1');
                 if(debug_gs1){
                     barcode = debug_gs1;

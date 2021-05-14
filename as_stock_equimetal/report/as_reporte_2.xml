@@ -68,7 +68,7 @@
                             </tr>
                             <tr>
                                 <td>Lote:</td>
-                                <td><span t-esc="o.as_get_date_lote()" /></td>
+                                <td><span t-esc="o.as_get_date_lote_SC()" /></td>
                             </tr>
                              <tr >
                                 <td>Peso neto:</td>
@@ -84,7 +84,7 @@
                             </tr>
                             <tr>
                                 <td style="border-bottom: 1px solid black;">Vencimiento:</td>
-                                <td style="border-bottom: 1px solid black;"><span t-if="o.as_fecha_vencimiento()" t-esc="o.as_fecha_vencimiento()" /></td>
+                                <td style="border-bottom: 1px solid black;"><span t-if="o.as_fecha_vencimientostr()" t-esc="o.as_fecha_vencimientostr()" /></td>
                             </tr>
                             <tr style="height: 110px">
 
