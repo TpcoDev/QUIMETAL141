@@ -76,7 +76,7 @@ class AsStockPicking(models.Model):
                 vals_move_line = {}
                 for move_line in move_stock.move_line_ids:
                     vals_move_line.update({
-                        "distNumber": move_line.lot_id.name,
+                        "DistNumber": move_line.lot_id.name,
                         "Quantity": move_line.qty_done,
                         "DateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
                         "DateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
@@ -86,13 +86,13 @@ class AsStockPicking(models.Model):
                     "ItemCode": move_stock.product_id.default_code,
                     "ItemDescription": move_stock.product_id.name,
                     "Quantity": move_stock.quantity_done,
-                    "measureUnit": move_stock.product_uom.name,
-                    "lote": move,
+                    "MeasureUnit": move_stock.product_uom.name,
+                    "Lote": move,
                 })
                 picking_line.append(vals_picking_line)
             if webservice == 'WS005':
                 vals_picking = {
-                    "DocNum": picking.name,
+                    "DocNum": str(picking.as_ot_sap),
                     "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
                     "DocNumSAP": int(picking.as_ot_sap),
                     "WarehouseCodeOrigin": picking.location_id.name,
@@ -103,7 +103,7 @@ class AsStockPicking(models.Model):
                 }
             elif webservice in ('WS004'):
                 vals_picking = {
-                    "DocNum": picking.name,
+                    "DocNum": str(picking.as_ot_sap),
                     "DocNumSAP": int(picking.as_ot_sap),
                     "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
                     "WarehouseCodeOrigin": picking.location_id.name,
@@ -112,7 +112,7 @@ class AsStockPicking(models.Model):
                 }
             elif webservice in ('WS006','WS099'):
                 vals_picking = {
-                    "DocNum": picking.name,
+                    "DocNum": str(picking.as_ot_sap),
                     "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
                     "WarehouseCodeOrigin": picking.location_id.name,
                     "WarehouseCodeDestination": picking.location_dest_id.name,
@@ -120,7 +120,7 @@ class AsStockPicking(models.Model):
                 }
             elif webservice in ('WS018'):
                 vals_picking = {
-                    "DocNum": picking.name,
+                    "DocNum": str(picking.as_ot_sap),
                     "DocDueDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
                     "WarehouseCodeOrigin": picking.location_id.name,
                     "WarehouseCodeDestination": picking.location_dest_id.name,
@@ -133,7 +133,7 @@ class AsStockPicking(models.Model):
                 }
             elif webservice in ('WS021'):
                 vals_picking = {
-                    "DocNum": picking.name,
+                    "DocNum": str(picking.as_ot_sap),
                     "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
                     "WarehouseCodeDestination": picking.location_dest_id.name,
                     "NumFactura": picking.as_num_factura,
