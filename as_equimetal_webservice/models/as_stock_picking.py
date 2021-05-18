@@ -76,69 +76,69 @@ class AsStockPicking(models.Model):
                 vals_move_line = {}
                 for move_line in move_stock.move_line_ids:
                     vals_move_line.update({
-                        "DistNumber": move_line.lot_id.name,
-                        "Quantity": move_line.qty_done,
-                        "DateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
-                        "DateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                        "distNumber": move_line.lot_id.name,
+                        "quantity": move_line.qty_done,
+                        "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                        "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
                     })
                     move.append(vals_move_line)
                 vals_picking_line.update({
-                    "ItemCode": move_stock.product_id.default_code,
-                    "ItemDescription": move_stock.product_id.name,
-                    "Quantity": move_stock.quantity_done,
-                    "MeasureUnit": move_stock.product_uom.name,
-                    "Lote": move,
+                    "itemCode": move_stock.product_id.default_code,
+                    "itemDescription": move_stock.product_id.name,
+                    "quantity": move_stock.quantity_done,
+                    "measureUnit": move_stock.product_uom.name,
+                    "lote": move,
                 })
                 picking_line.append(vals_picking_line)
             if webservice == 'WS005':
                 vals_picking = {
-                    "DocNum": str(picking.as_ot_sap),
-                    "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "DocNumSAP": int(picking.as_ot_sap),
-                    "WarehouseCodeOrigin": picking.location_id.name,
-                    "WarehouseCodeDestination": picking.location_dest_id.name,
-                    "CardCode": picking.partner_id.vat,
-                    "CardName": picking.partner_id.name,
-                    "Detalle": picking_line,
+                    "docNum": str(picking.name),
+                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
+                    "docNumSAP": int(picking.as_ot_sap),
+                    "warehouseCodeOrigin": picking.location_id.name,
+                    "warehouseCodeDestination": picking.location_dest_id.name,
+                    "cardCode": picking.partner_id.vat,
+                    "cardName": picking.partner_id.name,
+                    "detalle": picking_line,
                 }
             elif webservice in ('WS004'):
                 vals_picking = {
-                    "DocNum": str(picking.as_ot_sap),
-                    "DocNumSAP": int(picking.as_ot_sap),
-                    "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "WarehouseCodeOrigin": picking.location_id.name,
-                    "WarehouseCodeDestination": picking.location_dest_id.name,
-                    "Detalle": picking_line,
+                    "docNum": str(picking.name),
+                    "docNumSAP": str(picking.as_ot_sap),
+                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
+                    "warehouseCodeOrigin": picking.location_id.name,
+                    "warehouseCodeDestination": picking.location_dest_id.name,
+                    "detalle": picking_line,
                 }
             elif webservice in ('WS006','WS099'):
                 vals_picking = {
-                    "DocNum": str(picking.as_ot_sap),
-                    "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "WarehouseCodeOrigin": picking.location_id.name,
-                    "WarehouseCodeDestination": picking.location_dest_id.name,
-                    "Detalle": picking_line,
+                    "docNum": str(picking.name),
+                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
+                    "warehouseCodeOrigin": picking.location_id.name,
+                    "warehouseCodeDestination": picking.location_dest_id.name,
+                    "detalle": picking_line,
                 }
             elif webservice in ('WS018'):
                 vals_picking = {
-                    "DocNum": str(picking.as_ot_sap),
+                    "docNum": str(picking.name),
                     "DocDueDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "WarehouseCodeOrigin": picking.location_id.name,
-                    "WarehouseCodeDestination": picking.location_dest_id.name,
-                    "CardCode": picking.partner_id.vat,
-                    "CardName": picking.partner_id.name,
-                    "NumFactura": picking.as_num_factura,
-                    "NumGuiaDesp": picking.l10n_latam_document_number,
-                    "NumOVAsoc": picking.origin,
-                    "Detalle": picking_line,
+                    "warehouseCodeOrigin": picking.location_id.name,
+                    "warehouseCodeDestination": picking.location_dest_id.name,
+                    "cardCode": picking.partner_id.vat,
+                    "cardName": picking.partner_id.name,
+                    "numFactura": str(picking.as_num_factura),
+                    "numGuiaDesp": str(picking.l10n_latam_document_number),
+                    "numOVAsoc": picking.origin,
+                    "detalle": picking_line,
                 }
             elif webservice in ('WS021'):
                 vals_picking = {
-                    "DocNum": str(picking.as_ot_sap),
-                    "DocDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "WarehouseCodeDestination": picking.location_dest_id.name,
-                    "NumFactura": picking.as_num_factura,
-                    "NumGuiaDesp": picking.l10n_latam_document_number,
-                    "Detalle": picking_line,
+                    "docNum": str(picking.name),
+                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
+                    "warehouseCodeDestination": picking.location_dest_id.name,
+                    "numFactura": str(picking.as_num_factura),
+                    "numGuiaDesp": str(picking.l10n_latam_document_number),
+                    "detalle": picking_line,
                 }
             self.message_post(body = vals_picking)
         return vals_picking
