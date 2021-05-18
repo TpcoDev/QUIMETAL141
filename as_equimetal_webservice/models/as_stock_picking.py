@@ -32,34 +32,35 @@ class AsStockPicking(models.Model):
 
     def action_picking_sap(self):
         webservice = self.as_webservice
-        try:
-            token = self.as_get_apikey(self.env.user.id)
-            if token != None:
-                headerVal = {}
-                # headerVal = {'Authorization': token}
-                requestBody = {
-                    'res_id': self.name,
-                }
-                credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-                URL=credentials+address_webservice[webservice]
-                r = requests.post(URL, json=requestBody, headers=headerVal)
-                if r.ok:
-                    text = r.text
-                    info = json.loads(text)
-                    if info['result']['RespCode'] == 0:
-                        body =  "<b style='color:green'>EXITOSO ("+webservice+")!: </b><br>"
-                        body += '<b>'+info['result']['RespMessage']+'</b>'                        
+        if webservice:
+            try:
+                token = self.as_get_apikey(self.env.user.id)
+                if token != None:
+                    headerVal = {}
+                    # headerVal = {'Authorization': token}
+                    requestBody = {
+                        'res_id': self.name,
+                    }
+                    credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                    URL=credentials+address_webservice[webservice]
+                    r = requests.post(URL, json=requestBody, headers=headerVal)
+                    if r.ok:
+                        text = r.text
+                        info = json.loads(text)
+                        if info['result']['RespCode'] == 0:
+                            body =  "<b style='color:green'>EXITOSO ("+webservice+")!: </b><br>"
+                            body += '<b>'+info['result']['RespMessage']+'</b>'                        
+                        else:
+                            body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br>"
+                            body += '<b>'+info['result']['RespMessage']+'</b>'
                     else:
-                        body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br>"
-                        body += '<b>'+info['result']['RespMessage']+'</b>'
+                        body =  "<b style='color:red'>ERROR ("+webservice+")!:</b><br> <b> No aceptado por SAP</b><br>" 
                 else:
-                    body =  "<b style='color:red'>ERROR ("+webservice+")!:</b><br> <b> No aceptado por SAP</b><br>" 
-            else:
-                body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
-        except Exception as e:
-            body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>"
-            
-        self.message_post(body = body)
+                    body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
+            except Exception as e:
+                body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>"
+                
+            self.message_post(body = body)
         
     def as_get_apikey(self,user_id):
         query = self.env.cr.execute("""select key from res_users_apikeys where user_id ="""+str(user_id)+"""""")
@@ -69,12 +70,22 @@ class AsStockPicking(models.Model):
     def as_assemble_picking_json(self,webservice):
         picking_line = []
         vals_picking_line = {}
+        cont_errores = 0
         for picking in self:
+            errores = '<b style="color:orange;">Errores de formulario:</b><br/>'
+            try:
+                int(picking.name)
+            except Exception as e:
+                errores+= '<b>* El nombre no puede tener letras solo Numeros</b><br/>'
+                cont_errores +=1
             #se ensamblan los stock.move
             for move_stock in picking.move_ids_without_package:
                 move = []
                 vals_move_line = {}
                 for move_line in move_stock.move_line_ids:
+                    if not move_line.lot_id:
+                        errores+= '<b>* Producto No posee Lote</b><br/>'
+                        cont_errores +=1
                     vals_move_line.update({
                         "distNumber": move_line.lot_id.name,
                         "quantity": move_line.qty_done,
@@ -82,6 +93,9 @@ class AsStockPicking(models.Model):
                         "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
                     })
                     move.append(vals_move_line)
+                if not move_stock.product_id.default_code:
+                    errores+= '<b>* Producto No posee Referencia interna</b><br/>'
+                    cont_errores +=1
                 vals_picking_line.update({
                     "itemCode": move_stock.product_id.default_code,
                     "itemDescription": move_stock.product_id.name,
@@ -91,6 +105,12 @@ class AsStockPicking(models.Model):
                 })
                 picking_line.append(vals_picking_line)
             if webservice == 'WS005':
+                if not picking.partner_id:
+                    errores+= '<b>* Cliente No seleccionado</b><br/>'
+                    cont_errores +=1
+                if not picking.as_ot_sap:
+                    errores+= '<b>* OT SAP No completado</b><br/>'
+                    cont_errores +=1
                 vals_picking = {
                     "docNum": str(picking.name),
                     "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
@@ -102,6 +122,9 @@ class AsStockPicking(models.Model):
                     "detalle": picking_line,
                 }
             elif webservice in ('WS004'):
+                if not picking.as_ot_sap:
+                    errores+= '<b>* OT SAP No completado</b><br/>'
+                    cont_errores +=1
                 vals_picking = {
                     "docNum": str(picking.name),
                     "docNumSAP": str(picking.as_ot_sap),
@@ -119,6 +142,18 @@ class AsStockPicking(models.Model):
                     "detalle": picking_line,
                 }
             elif webservice in ('WS018'):
+                if not picking.partner_id:
+                    errores+= '<b>* Cliente No seleccionado</b><br/>'
+                    cont_errores +=1
+                if not picking.as_num_factura:
+                    errores+= '<b>* Numero de Factura no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.l10n_latam_document_number:
+                    errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.origin:
+                    errores+= '<b>* Origen de movimiento no completado</b><br/>'
+                    cont_errores +=1
                 vals_picking = {
                     "docNum": str(picking.name),
                     "DocDueDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
@@ -132,6 +167,12 @@ class AsStockPicking(models.Model):
                     "detalle": picking_line,
                 }
             elif webservice in ('WS021'):
+                if not picking.as_num_factura:
+                    errores+= '<b>* Numero de Factura no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.l10n_latam_document_number:
+                    errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
+                    cont_errores +=1
                 vals_picking = {
                     "docNum": str(picking.name),
                     "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
@@ -140,5 +181,8 @@ class AsStockPicking(models.Model):
                     "numGuiaDesp": str(picking.l10n_latam_document_number),
                     "detalle": picking_line,
                 }
+
+            if cont_errores > 0:
+                self.message_post(body = errores)
             self.message_post(body = vals_picking)
         return vals_picking
