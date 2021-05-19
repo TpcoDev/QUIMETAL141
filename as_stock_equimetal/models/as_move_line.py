@@ -11,9 +11,9 @@ class StockMoveLine(models.Model):
     def as_get_date_lote(self):
         lote = ''
         if self.lot_name:
-            lote =  str(self.lot_name).zfill(12)
+            lote =  str(self.lot_name)
         else:
-            lote =  str(self.lot_id.name).zfill(12)
+            lote =  str(self.lot_id.name)
         return lote
 
     def as_get_date_lote_SC(self):
@@ -30,6 +30,8 @@ class StockMoveLine(models.Model):
         for line in self:
             if line.expiration_date:
                 fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
+            if not line.expiration_date and line.lot_id.expiration_date:
+                fecha_vencimiento = (line.lot_id.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
         return fecha_vencimiento
 
     def as_fecha_vencimientostr(self):
@@ -37,6 +39,9 @@ class StockMoveLine(models.Model):
         for line in self:
             if line.expiration_date:
                 fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y-%m-%d')
+            if not line.expiration_date and line.lot_id.expiration_date:
+                fecha_vencimiento = (line.lot_id.expiration_date-timedelta(hours=4)).strftime('%y-%m-%d')
+
         return fecha_vencimiento
 
     def as_barcode_mpp_1(self):

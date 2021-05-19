@@ -78,6 +78,11 @@ class AsStockPicking(models.Model):
             except Exception as e:
                 errores+= '<b>* El nombre no puede tener letras solo Numeros</b><br/>'
                 cont_errores +=1
+            try:
+                int(picking.origin)
+            except Exception as e:
+                errores+= '<b>* El origen no puede tener letras solo Numeros</b><br/>'
+                cont_errores +=1
             #se ensamblan los stock.move
             for move_stock in picking.move_ids_without_package:
                 move = []
@@ -108,13 +113,13 @@ class AsStockPicking(models.Model):
                 if not picking.partner_id:
                     errores+= '<b>* Cliente No seleccionado</b><br/>'
                     cont_errores +=1
-                if not picking.as_ot_sap:
-                    errores+= '<b>* OT SAP No completado</b><br/>'
+                if not picking.origin:
+                    errores+= '<b>* Campo Origen No completado</b><br/>'
                     cont_errores +=1
                 vals_picking = {
                     "docNum": str(picking.name),
                     "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "docNumSAP": int(picking.as_ot_sap),
+                    "docNumSAP": int(picking.origin),
                     "warehouseCodeOrigin": picking.location_id.name,
                     "warehouseCodeDestination": picking.location_dest_id.name,
                     "cardCode": picking.partner_id.vat,

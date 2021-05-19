@@ -26,7 +26,7 @@
 
 
                         .table {
-                            line-height: 10px;
+                            line-height: 14px;
                             border: 1px solid black;
                             width: 100%;
                             border-collapse: separate;
@@ -94,8 +94,11 @@
                                          <img class="img-fluid" t-attf-src="data:image/*;base64,{{o.as_imge}}" />
                                         <br/>
                                         <br/>
+                                        <br/>
                                         <span t-esc="o.as_barcode_pp_1()" />
                                             <br/>
+                                        <br/>
+                                        <br/>
                                         <br/>
                                         <br/>
                                   

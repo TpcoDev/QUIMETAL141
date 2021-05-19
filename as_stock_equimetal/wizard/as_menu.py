@@ -40,6 +40,12 @@ class as_wizard_fromulas_stock(models.Model):
         as_tipo = self._context.get('tipo')
         self.tipo = self._context.get('tipo')
         dictlinestock = []
+        tipo_producto=''
+        if as_tipo == 1:
+            tipo_producto = 'MP'
+        else:
+            tipo_producto = 'PP'
+
         # Si el modelo del contexto es production lot (LOTE)
         if as_modelo == "stock.production.lot":
             if res_ids[0]:
@@ -49,6 +55,8 @@ class as_wizard_fromulas_stock(models.Model):
                 # Materia Prima
                 for move in so_line_obj:
                     datos_producto = move.product_id
+                    if move.product_id.as_type_product != tipo_producto:
+                        raise UserError(_("El producto debe ser %s") % tipo_producto)
                     calculo = datos_producto.as_contenido_envase * datos_producto.as_cantidad_envase * datos_producto.as_cantidad_unidades
                     kg_compra = move.product_qty
                     if calculo > 0:
@@ -73,6 +81,8 @@ class as_wizard_fromulas_stock(models.Model):
                 # Materia Prima
                 for move in so_line_obj.move_line_ids_without_package:
                     datos_producto = move.product_id
+                    if move.product_id.as_type_product != tipo_producto:
+                        raise UserError(_("El producto debe ser %s") % tipo_producto)
                     calculo = datos_producto.as_contenido_envase * datos_producto.as_cantidad_envase * datos_producto.as_cantidad_unidades
                     kg_compra = move.qty_done
                     if calculo > 0:

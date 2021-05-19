@@ -12,6 +12,9 @@
                     <field name='as_cantidad_envase' />
                     <field name='as_cantidad_unidades' />
                 </xpath>
+                <xpath expr="//field[@name='categ_id']" position="before">
+                    <field name='as_type_product' widget="radio"  options="{'horizontal': true}"/>
+                </xpath>
             </field>
         </record>
       

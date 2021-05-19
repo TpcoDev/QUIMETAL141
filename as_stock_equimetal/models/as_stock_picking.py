@@ -20,7 +20,6 @@ class StockMoveLine(models.Model):
             'default_use_template': bool(template_id),
             'default_template_id': template_id,
             'default_composition_mode': 'comment',
-            # 'mark_so_as_sent': True,
             'custom_layout': "mail.mail_notification_paynow",
             'force_email': True,
         }

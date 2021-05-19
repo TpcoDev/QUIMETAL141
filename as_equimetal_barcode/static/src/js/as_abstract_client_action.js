@@ -22,9 +22,66 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
      * @param {string} barcode scanned barcode
      * @param {Object} linesActions
      * @returns {Promise}
+     * @param {OdooEvent} ev
      */
+
+    searchReadGS1: function (barcode) {
+        console.log('Enro aqui tercero'+barcode)
+        url = window.location.origin
+        var urlcadena = window.location.origin + '/quimetal/barcode' + '?barcode=' + barcode;
+        console.log(urlcadena);
+        window.vals_resp = ''
+        $.ajax({
+            url: urlcadena,
+            success: function (respuesta) {
+                var obj = JSON.parse(respuesta);
+                window.vals_resp = obj;
+                
+            },
+            error: function () {
+                console.log("No se ha podido obtener la información");
+                window.vals_resp = {
+                    'type':false,
+                    'barcode': barcode,
+                    'product': false,
+                };
+            }
+        });
+        return vals_resp;
+    
+    },
+    urlParam: function (barcode) {
+        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        if (results == null) {
+            return null;
+        }
+        return decodeURI(results[1]) || 0;
+    },
     _step_product: function (barcode, linesActions) {
-        console.log('se ha entrado a escanear codigos de bara ee4jemplo')
+        
+        console.log('Enro aqui tercero'+barcode)
+        var debug_gs1 = this.urlParam('debug_gs1');
+        if(debug_gs1){
+            barcode = debug_gs1;
+        }
+        barcode = this.searchReadGS1(barcode);
+        window.barr = barcode;
+        var product = false;
+        if (barcode.type){
+            product = barcode.product;
+            barcode = barcode.lote;
+        }
+        
+        console.log('CODIGO DE LOTE DECODIFICADO'+barcode)
+        if (! this.groups.group_production_lot) {
+            return Promise.reject();
+        }
+        if (!product){
+            console.log(_t('ERROR “PRODUCTO NO ESTÁ EN SISTEMA, DEBE CREARLO.'));
+            errorMessage = _t('ERROR “PRODUCTO NO ESTÁ EN SISTEMA, DEBE CREARLO.');
+            return Promise.reject(errorMessage);
+        }
+        
         var self = this;
         this.currentStep = 'product';
         this.stepState = $.extend(true, {}, this.currentState);
@@ -106,24 +163,20 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
          * @returns {Promise}
          */
         _step_lot: function (barcode, linesActions) {
-            
-            
-            if (! this.groups.group_production_lot) {
-                return Promise.reject();
-            }
+
             this.currentStep = 'lot';
             this.stepState = $.extend(true, {}, this.currentState);
             var errorMessage;
             var self = this;
     
             // Bypass this step if needed.
+            console.log('Enro aqui segundo'+barcode)
             if (this.productsByBarcode[barcode]) {
                 
                 return this._step_product(barcode, linesActions);
             } else if (this.locationsByBarcode[barcode]) {
                 return this._step_destination(barcode, linesActions);
             }
-            console.log('Enro aqui segundo'+barcode)
     
             var getProductFromLastScannedLine = function () {
                 if (self.scannedLines.length) {
@@ -223,57 +276,10 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
             };
 
 
-            var searchReadGS1 = function (barcode) {
-                url = window.location.origin
-                var urlcadena = window.location.origin + '/quimetal/barcode' + '?barcode=' + barcode;
-                console.log(urlcadena);
-                $.ajax({
-                    url: urlcadena,
-                    success: function (respuesta) {
-                        var obj = JSON.parse(respuesta);
-                        window.vals_resp = obj;
-                        
-                    },
-                    error: function () {
-                        console.log("No se ha podido obtener la información");
-                        window.vals_resp = {
-                            'type':false,
-                            'barcode': barcode,
-                            'product': false,
-                        };
-                    }
-                });
-                window.as_jason =vals_resp;
-                return vals_resp;
-            
-            };
-            var urlParam = function (name) {
-                var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
-                if (results == null) {
-                    return null;
-                }
-                return decodeURI(results[1]) || 0;
-            }
-            
+
             var searchRead = function (barcode) {
-                console.log('Enro aqui tercero'+barcode)
-                var debug_gs1 = urlParam('debug_gs1');
-                if(debug_gs1){
-                    barcode = debug_gs1;
-                }
-                barcode = searchReadGS1(barcode);
-                window.barr = barcode;
-                var product = false;
-                if (barcode.type){
-                    product = barcode.product;
-                    barcode = barcode.lote;
-                }
-                if (!product){
-                    console.log(_t('ERROR “PRODUCTO NO ESTÁ EN SISTEMA, DEBE CREARLO.'));
-                    errorMessage = _t('ERROR “PRODUCTO NO ESTÁ EN SISTEMA, DEBE CREARLO.');
-                    return Promise.reject(errorMessage);
-                }
-                
+
+
                 var line_with_lot = _.find(self.currentState.move_line_ids, function (line) {
                     return (line.lot_id && line.lot_id[1] === barcode) || line.lot_name === barcode;
                 });
@@ -333,6 +339,8 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
                         this.currentState.use_existing_lots) {
                 
                 def = searchRead(barcode);
+                console.log('ENRTRO AQUI 1111');
+                this._onEditLine(ev)
             } else {
                 
                 def = searchRead(barcode).then(function (res) {
@@ -344,6 +352,8 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
                             return Promise.resolve({lot_id: lot_id, lot_name: barcode, product: product});
                         });
                     }
+                    console.log('ENRTRO AQUI 222');
+                    this._onEditLine(ev)
                     return Promise.reject(errorMessage);
                 });
             }
@@ -373,6 +383,43 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
                 }
                 return Promise.resolve({linesActions: linesActions});
             });
+        },
+        /**
+         * Handles the 'increment_line' OdooEvent. From a line (`LinesWidget`), it
+         * will increase the quantity of the corresponding line.
+         *
+         * @abstract
+         * @param {OdooEvent} ev
+         * @param {integer} ev.data.id id on the line to increment
+         * @param {integer} [ev.data.qty] quantity to increase (1 by default)
+         */
+        _onIncrementLine: function (ev) {
+            console.log('se ha entrado a escanear codigos de bara incremento2')
+            ev.stopPropagation();
+            const id = ev.data.id;
+            const qty = ev.data.qty || 1;
+            const line = this._getLines(this.currentState).find(l => id === (l.id || l.virtual_id));
+            line[this._getQuantityField()] += qty;
+            // Add the line like if user scanned it to be able to find it if user
+            // will scan the same product after.
+            this.scannedLines.push(id);
+            this.linesWidget.incrementProduct(id, qty, this.actionParams.model, true);
+            this._onEditLine(ev)
+            // this._step_product('10455|91MPFER009')
+        },
+        /**
+         * Handles the 'listen_to_barcode_scanned' OdooEvent.
+         *
+         * @private
+         * @param {OdooEvent} ev ev.data.listen
+         */
+        _onListenToBarcodeScanned: function (ev) {
+            if (ev.data.listen) {
+                core.bus.on('barcode_scanned', this, this._onBarcodeScannedHandler);
+            } else {
+                core.bus.off('barcode_scanned', this, this._onBarcodeScannedHandler);
+            }
+            this._onEditLine(ev)
         },
     });
     core.action_registry.add('stock_barcode.stock_barcode_client_action', ClientActionQ);
