@@ -67,10 +67,10 @@ class as_webservice_quimetal(http.Controller):
 
                 if es_valido:
                     # Tratamiento de cliente
-                    w_search = request.env["purchase.order"].sudo().search([('name', '=', post['DocNum'])])
+                    w_search = request.env["purchase.order"].sudo().search([('name', '=', post['DocNum'])],limit=1)
                     if not w_search:
                         cliente = request.env['res.partner']
-                        cliente_search = cliente.sudo().search([('name', 'ilike', post['CardName'])])
+                        cliente_search = cliente.sudo().search([('name', '=', post['CardName'])])
                         if cliente_search.id:
                             cliente_id = cliente_search.id
                         else:
@@ -92,7 +92,7 @@ class as_webservice_quimetal(http.Controller):
                         compra_nueva_linea = []
                         for linea in post["DatosProdOC"]:
                             producto_uom = request.env['uom.uom']
-                            producto_uom_search = producto_uom.sudo().search([('name', 'ilike', linea['MeasureUnit'])])[0]
+                            producto_uom_search = producto_uom.sudo().search([('name', '=', linea['MeasureUnit'])])[0]
                             producto_uom_id = 0
                             if producto_uom_search.id:
                                 producto_uom_id = producto_uom_search.id
@@ -210,11 +210,11 @@ class as_webservice_quimetal(http.Controller):
                 post = post['params']
                 uid = request.env.user.id
                 if es_valido:
-                    w_search = request.env["sale.order"].sudo().search([('name', '=', post['DocNum'])])
+                    w_search = request.env["sale.order"].sudo().search([('name', '=', post['DocNum'])],limit=1)
                     if not w_search:
                         # Tratamiento de cliente
                         cliente = request.env['res.partner']
-                        cliente_search = cliente.sudo().search([('name', 'ilike', post['CardName'])])
+                        cliente_search = cliente.sudo().search([('name', '=', post['CardName'])])
                         if cliente_search.id:
                             cliente_id = cliente_search.id
                         else:
@@ -267,7 +267,7 @@ class as_webservice_quimetal(http.Controller):
 
                             # Tratamiento de UOM
                             producto_uom = request.env['uom.uom']
-                            producto_uom_search = producto_uom.sudo().search([('name', 'ilike', linea['MeasureUnit'])])[0]
+                            producto_uom_search = producto_uom.sudo().search([('name', '=', linea['MeasureUnit'])])[0]
                             producto_uom_id = 0
                             if producto_uom_search.id:
                                 producto_uom_id = producto_uom_search.id
@@ -855,7 +855,7 @@ class as_webservice_quimetal(http.Controller):
         return rw_id
 
     def as_get_uom_id(self,model,value):
-        rw = request.env[model].sudo().search([('name','ilike',value['MeasureUnit'])],limit=1)
+        rw = request.env[model].sudo().search([('name','=',value['MeasureUnit'])],limit=1)
         rw_id = False
         if rw:
             rw_id = rw.id
