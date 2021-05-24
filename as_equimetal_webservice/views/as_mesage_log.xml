@@ -37,6 +37,7 @@
                             <field name="state" />
                             <field name="as_motivo" />
                             <field name="as_json" />
+                            <field name="create_date" />
                 </tree>
             </field>
         </record>
