@@ -36,6 +36,7 @@ class as_barcode_quimetal(http.Controller):
                     'lote': lote,
                     'barcode': barcode,
                     'product': False,
+                    'result': json.dumps(result),
                 }
             else:
                 lot_id = request.env['stock.production.lot'].sudo().search([('name','=',lote)],limit=1)
@@ -45,6 +46,7 @@ class as_barcode_quimetal(http.Controller):
                         'lote': lote,
                         'barcode': barcode,
                         'product': product_code,
+                        'result': json.dumps(result),
                     }
                     lot_id.message_post(body = barcode)
                 else:
@@ -58,12 +60,14 @@ class as_barcode_quimetal(http.Controller):
                         'lote': lot_id.name,
                         'barcode': barcode,
                         'product': product_code,
+                        'result': json.dumps(result),
                     }      
                     lot_id.message_post(body = barcode)     
         except Exception as e:
             vals2={
                 'type':False,
                 'barcode': barcode,
+                'result': json.dumps(result),
             
             }
         log_id = request.env['as.barcode.log'].sudo().create({

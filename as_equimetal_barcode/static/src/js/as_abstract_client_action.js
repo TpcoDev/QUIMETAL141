@@ -400,14 +400,14 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
             var debug_gs1 = urlParam2('debug_gs1');
             if (debug_gs1) {
                 barcode = debug_gs1;
-                alert(debug_gs1)
+                // alert(debug_gs1)
             }
             // barcode = '104443391MPQUI01117210308';
             //llamando a endpoint barcode
             var urlcadena = window.location.origin + '/quimetal/barcode' + '?barcode=' + barcode;
             console.log(urlcadena);
-           
-
+            
+            
             $.ajax({
                 url: urlcadena,
                 global: false,
@@ -416,6 +416,7 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
                     console.log('RESPUESTASJ' + (respuesta))
                     window.val1 = JSON.parse(respuesta);
                     vals_resp = JSON.parse(respuesta);
+                    alert(vals_resp.result)
                     
                 },
                 error: function () {
@@ -433,7 +434,6 @@ odoo.define('as_equimetal_barcode.ClientActionQ', function (require) {
             if (resultado.type) {
                 barcode = resultado.lote;
             }
-            // alert(barcode)
 
             this.mutex.exec(function () {
                 if (self.mode === 'done' || self.mode === 'cancel') {

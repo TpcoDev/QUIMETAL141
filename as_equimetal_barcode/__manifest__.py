@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name' : "Ahorasoft EQUIMETAL Barcode",
-    'version' : "1.0.",
+    'version' : "1.0.1",
     'author'  : "Ahorasoft",
     'description': """
 Webservice dummy equimetal
