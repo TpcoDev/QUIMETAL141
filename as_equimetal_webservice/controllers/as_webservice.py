@@ -872,8 +872,8 @@ class as_webservice_quimetal(http.Controller):
                 "name": value['DistNumber'],
                 "product_id": product_id,
                 "company_id": request.env.user.company_id.id,
-                "create_date": value['DateProduction'].replace("T"," "),
-                "expiration_date": value['DateExpiration'].replace("T"," "),
+                "create_date": value['DateProduction'].replace("T"," ").replace("Z",""),
+                "expiration_date": value['DateExpiration'].replace("T"," ").replace("Z",""),
                 })
             rw_id = rw_new_id.id
         return rw_id
