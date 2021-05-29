@@ -376,19 +376,20 @@ class as_webservice_quimetal(http.Controller):
                 uid = user_id
                 # request.session.logout()
                 estructura = self.get_file('ws023.json')
-                es_valido = self.validar_json(post, esquema=estructura)
+                es_valido = True
 
                 if es_valido:
                     vals_picking = {}
                     for linea in post['params']:
                         docdate = post['params']['DocDate'].replace("T"," ")
+                        docdate = docdate.replace("Z","")
                         sp = request.env['stock.picking']
                         sp_search = sp.sudo().search([('name', '=', post['params']['DocNum'])])
                         if not sp_search:
                             #se seleccionan las ubicaciones si no esxiste se crea y se retorna el ID
                             slo = self.as_get_id('stock.location',post['params']['WarehouseCodeOrigin'])
                             sld = self.as_get_id('stock.location',post['params']['WarehouseCodeDestination'])
-                            picking_type_id = request.env['stock.picking.type'].sudo().search([('default_location_src_id', '=', slo)])
+                            picking_type_id = request.env['stock.picking.type'].sudo().search([('sequence_code', '=', 'INT_PP_SF')])
                             picking = request.env['stock.picking'].sudo().create({
                                     'location_id': slo,
                                     'date': docdate,

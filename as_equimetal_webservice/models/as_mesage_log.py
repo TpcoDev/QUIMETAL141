@@ -4,6 +4,7 @@ from odoo import models, fields, api,_
 class AsMessageLog(models.Model):
     _name = 'as.webservice.logs'
     _description = 'Logs para webservice'
+    _order = 'create_date desc'
         
     name = fields.Char(string='Webservice (method)')
     as_token = fields.Char(string='Token')
