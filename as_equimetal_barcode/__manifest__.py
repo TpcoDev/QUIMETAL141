@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name' : "Ahorasoft EQUIMETAL Barcode",
-    'version' : "1.0.1",
+    'version' : "1.0.4",
     'author'  : "Ahorasoft",
     'description': """
 Webservice dummy equimetal
@@ -25,6 +25,12 @@ Custom module for Latproject
             'views/as_barcode_log.xml',
              ],
     'demo' : [],
+    'qweb': [
+        "static/src/xml/*.xml",
+    ],  
+      'qweb': [
+        "static/xml/as_abstract_client_action.xml",
+    ],  
     'installable': True,
     'application': True,
     'auto_install': False

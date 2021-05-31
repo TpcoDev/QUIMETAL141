@@ -5,11 +5,8 @@ import sys
 import uuid
 from odoo import http
 from odoo.http import request, Response
-import jsonschema
-from jsonschema import validate
 import json
 import logging
-import biip
 _logger = logging.getLogger(__name__)
 from datetime import timedelta, datetime, date
 
@@ -22,6 +19,7 @@ class as_barcode_quimetal(http.Controller):
         barcode = post.get('barcode') or None
         barcode = barcode.replace("|","\x1d")
         # barcode = '10455\x1d91MPFIL093\x1d3721\x1d310000031517210308'
+        result = ""
         try:
             result =  request.env['gs1_barcode'].sudo().decode(barcode)
             # result = biip.parse(barcode,separator_chars=('\x1d'))

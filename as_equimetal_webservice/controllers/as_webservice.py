@@ -376,7 +376,7 @@ class as_webservice_quimetal(http.Controller):
                 uid = user_id
                 # request.session.logout()
                 estructura = self.get_file('ws023.json')
-                es_valido = True
+                es_valido = self.validar_json(post, esquema=estructura)
 
                 if es_valido:
                     vals_picking = {}
