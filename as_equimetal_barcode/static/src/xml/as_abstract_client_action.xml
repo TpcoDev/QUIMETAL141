@@ -9,8 +9,8 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-10">
-                        <input type='text' id='barman' class="o_search_barman" style='width:350px; font-size:20px;' />
+                    <div class="col-9">
+                        <input type='text' id='barman' class="o_search_barman" style='width:300px; font-size:18px;' />
                     </div>
                     <div class="col-2">
                         <button id='barman_button' class="btn btn-secondary barman_button o_barman">Buscar</button>
@@ -18,13 +18,13 @@
                 </div>
                 <div class="row align-items-center">
                     <div class="col-12">
-                        <span style='font-size:20px;' id="as_barcode_scanned"></span>
+                        <span style='font-size:18px;' id="as_barcode_scanned"></span>
                     </div>
                 </div>
                 <div class="row">
 
                     <div class="col-12">
-                        <span style='font-size:20px;' id="as_barcode_scanned2"></span>
+                        <span style='font-size:18px;' id="as_barcode_scanned2"></span>
                     </div>
                 </div>
                 <!-- <span class="o_hidden o_scan_message o_scan_message_scan_products">Scan products</span> -->
@@ -49,9 +49,9 @@
         </t>
     </t>
 
-    <!-- <t t-extend="stock_barcode_lines_widget">
+    <t t-extend="stock_barcode_lines_widget">
         <t t-jquery=".o_barcode_pic.position-relative" t-operation="replace">
 
         </t>
-    </t> -->
+    </t>
 </templates>

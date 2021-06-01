@@ -17,10 +17,12 @@ class as_barcode_quimetal(http.Controller):
     def barcode(self, **post):
         # order_reference = row_id
         barcode = post.get('barcode') or None
-        barcode = barcode.replace("|","\x1d")
+
+        # barcode = barcode.replace("|","\x1d")
         # barcode = '10455\x1d91MPFIL093\x1d3721\x1d310000031517210308'
         result = ""
         try:
+            
             result =  request.env['gs1_barcode'].sudo().decode(barcode)
             # result = biip.parse(barcode,separator_chars=('\x1d'))
             # lote = result.gs1_message.get(ai="10").value
