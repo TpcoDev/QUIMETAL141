@@ -49,9 +49,9 @@
         </t>
     </t>
 
-    <t t-extend="stock_barcode_lines_widget">
+    <!-- <t t-extend="stock_barcode_lines_widget">
         <t t-jquery=".o_barcode_pic.position-relative" t-operation="replace">
 
         </t>
-    </t>
+    </t> -->
 </templates>
