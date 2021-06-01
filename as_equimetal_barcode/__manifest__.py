@@ -26,9 +26,6 @@ Custom module for Latproject
              ],
     'demo' : [],
     'qweb': [
-        "static/src/xml/*.xml",
-    ],  
-      'qweb': [
         "static/xml/as_abstract_client_action.xml",
     ],  
     'installable': True,
