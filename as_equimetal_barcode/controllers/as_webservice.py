@@ -52,8 +52,8 @@ class as_barcode_quimetal(http.Controller):
                 else:
                     lot_id = request.env['stock.production.lot'].sudo().create({
                             'product_id': product_id.id,
-                            'name': lote.name,
-                            'company_id': request.env.company.id,
+                            'name': lote,
+                            'company_id': request.env.user.company_id.id,
                         })
                     vals2={
                         'type':True,
