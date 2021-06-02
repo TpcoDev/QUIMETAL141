@@ -18,7 +18,7 @@
                     % endif
                     <br /><br />
                     % set website_url = object.env['ir.config_parameter'].sudo().get_param('web.base.url')
-                    Aqui se adjunta la transacción <b><a href='${website_url}/web#id=${object.as_picking_o.id}&amp;action=213&amp;active_id=5&amp;model=stock.picking&amp;view_type=form&amp;cids=${object.company_id.id}&amp;menu_id=101'>${website_url}/web#id=${object.as_picking_o.id}&amp;action=213&amp;active_id=5&amp;model=stock.picking&amp;view_type=form&amp;cids=${object.company_id.id}&amp;menu_id=101</a></b> <br />
+                    Aqui se adjunta la transacción <b><a href='${website_url}/web#id=${object.as_picking_o.id}&amp;action=213&amp;active_id=5&amp;model=stock.picking&amp;view_type=form&amp;cids=${object.company_id.id}&amp;menu_id=101'>${object.as_picking_o.name}</a></b> <br />
                     No dude en contactarnos si tiene cualquier consulta.<br />
                     <br />
                 </div>
@@ -35,23 +35,25 @@
             <field name="email_from">${object.company_id.partner_id.email}</field>
             <field name="email_to">${object.partner_id.email}</field>
             <field name="body_html" type="html">
-                <div>
+<div>
                     Estimado(s)
                     % if object.partner_id.parent_id:
                         ${object.partner_id.name} (${object.partner_id.parent_id.name}),
                     % else:
                         ${object.partner_id.name},
                     % endif
-                    <br /><br />
+                    <br/><br/>
                     Aqui se adjunta la transacción   
                     % if object.l10n_latam_document_number:
                         (${object.l10n_latam_document_number}),
                     % else:
                         (N/P),
-                    que informa resultado de revisión de calidad. <br />
-                    No dude en contactarnos si tiene cualquier consulta.<br />
+% endif
+                    que informa resultado de revisión de calidad. <br/><br/>
+                    No dude en contactarnos si tiene cualquier consulta.<br/>
 
                 </div>
+
             </field>
             <!-- <field name="report_template" ref="stock.action_report_picking" />
             <field name="report_name">Guia_despacho_${(object.name or '').replace('/','_')}</field>
