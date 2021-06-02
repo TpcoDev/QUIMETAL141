@@ -1,10 +1,48 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
+import os
+from odoo import http
+import werkzeug
+from werkzeug.urls import url_encode
 
 class StockMoveLine(models.Model):
     _inherit = 'stock.picking'
 
     partner_id = fields.Many2one(  'res.partner', 'Contact', check_company=True, states={'cancel': [('readonly', True)]})
+    as_picking_o = fields.Many2one('stock.picking',string="Movimeinto secundario",compute='_compute_purchase')
+
+    def _compute_purchase(self):
+        for line in self:
+            picking = self.env['stock.picking'].search([('origin','=',line.origin),('state','!=','cancel'),('id','!=',line.id)],limit=1)
+            line.as_picking_o = picking
+
+    def _get_share_url(self, redirect=False, signup_partner=False, pid=None):
+        """
+        Build the url of the record  that will be sent by mail and adds additional parameters such as
+        access_token to bypass the recipient's rights,
+        signup_partner to allows the user to create easily an account,
+        hash token to allow the user to be authenticated in the chatter of the record portal view, if applicable
+        :param redirect : Send the redirect url instead of the direct portal share url
+        :param signup_partner: allows the user to create an account with pre-filled fields.
+        :param pid: = partner_id - when given, a hash is generated to allow the user to be authenticated
+            in the portal chatter, if any in the target page,
+            if the user is redirected to the portal instead of the backend.
+        :return: the url of the record with access parameters, if any.
+        """
+        self.ensure_one()
+        params = {
+            'model': self._name,
+            'res_id': self.id,
+        }
+        if hasattr(self, 'access_token'):
+            params['access_token'] = self._portal_ensure_token()
+        if pid:
+            params['pid'] = pid
+            params['hash'] = self._sign_token(pid)
+        if signup_partner and hasattr(self, 'partner_id') and self.partner_id:
+            params.update(self.partner_id.signup_get_auth_param()[self.partner_id.id])
+
+        return '%s?%s' % ('/mail/view' if redirect else self.access_url, url_encode(params))
 
     def action_picking_send(self):
         ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''

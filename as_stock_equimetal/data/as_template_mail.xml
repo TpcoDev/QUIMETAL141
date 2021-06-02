@@ -17,9 +17,10 @@
                         ${object.partner_id.name},
                     % endif
                     <br /><br />
-                    Aqui se adjunta la transacción ${object.l10n_latam_document_number} <br />
+                    % set website_url = object.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                    Aqui se adjunta la transacción <b><a href='${website_url}/web#id=${object.as_picking_o.id}&amp;action=213&amp;active_id=5&amp;model=stock.picking&amp;view_type=form&amp;cids=${object.company_id.id}&amp;menu_id=101'>${website_url}/web#id=${object.as_picking_o.id}&amp;action=213&amp;active_id=5&amp;model=stock.picking&amp;view_type=form&amp;cids=${object.company_id.id}&amp;menu_id=101</a></b> <br />
                     No dude en contactarnos si tiene cualquier consulta.<br />
-
+                    <br />
                 </div>
             </field>
             <!-- <field name="report_template" ref="stock.action_report_picking" />
@@ -42,7 +43,12 @@
                         ${object.partner_id.name},
                     % endif
                     <br /><br />
-                    Aqui se adjunta la transacción ${object.l10n_latam_document_number} que informa resultado de revisión de calidad. <br />
+                    Aqui se adjunta la transacción   
+                    % if object.l10n_latam_document_number:
+                        (${object.l10n_latam_document_number}),
+                    % else:
+                        (N/P),
+                    que informa resultado de revisión de calidad. <br />
                     No dude en contactarnos si tiene cualquier consulta.<br />
 
                 </div>
