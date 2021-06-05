@@ -12,9 +12,10 @@
                     <div class="col-9">
                         <input type='text' id='barman' class="o_search_barman" style='width:300px; font-size:18px;' />
                     </div>
-                    <div class="col-2">
+                    <!-- <div class="col-2">
                         <button id='barman_button' class="btn btn-secondary barman_button o_barman">Buscar</button>
-                    </div>
+                    </div> -->
+                    
                 </div>
                 <div class="row align-items-center">
                     <div class="col-12">
