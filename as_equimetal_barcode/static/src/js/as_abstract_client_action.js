@@ -89,6 +89,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     if (theid == id){
                         $(this).find("a").click();
                         console.log("editando");
+                        $("input[name='qty_done']").select();
                     }
                 });
             }, 1000);
