@@ -2,6 +2,7 @@
 from odoo import models, fields, api,_
 from odoo.http import request
 import requests, json
+from odoo.tests.common import Form
 
 address_webservice = {
     'WS005':'/tpco/odoo/ws005',
@@ -27,11 +28,54 @@ class AsStockPicking(models.Model):
         ],
         string="Webservice",
     )
+    as_ot_num = fields.Integer(string='Numero Documento')
     as_ot_sap = fields.Integer(string='OT SAP')
     as_num_factura = fields.Char(string='Num de Factura')
 
+    def button_validate(self):
+        res = super().button_validate()
+        if self.picking_type_id.as_webservice:
+            self.action_picking_sap()
+        if self.picking_type_id.as_send_automatic:
+            self.as_send_email()
+        return res
+
+    def as_send_email(self):
+        ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
+        self.ensure_one()
+        template_id = self._find_mail_template()
+        lang = self.env.context.get('lang')
+        template = self.env['mail.template'].browse(template_id)
+        if template.lang:
+            lang = template._render_lang(self.ids)[self.id]
+        ctx = {
+            'default_model': 'stock.picking',
+            'default_res_id': self.ids[0],
+            'default_use_template': bool(template_id),
+            'default_template_id': template_id,
+            'default_composition_mode': 'comment',
+            'custom_layout': "mail.mail_notification_paynow",
+            'force_email': True,
+        }
+        wiz =  {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(False, 'form')],
+            'view_id': False,
+            'target': 'new',
+            'context': ctx,
+        }
+
+        wiz = Form(self.env['mail.compose.message'].with_context(ctx)).save()
+        wiz.action_send_mail()
+        self.message_post(body = "<b style='color:green;'>Enviado correo</b>")
+
     def action_picking_sap(self):
-        webservice = self.as_webservice
+        if self.as_webservice:
+            webservice = self.as_webservice
+        else:
+            webservice = self.picking_type_id.as_webservice
         if webservice:
             try:
                 token = self.as_get_apikey(self.env.user.id)

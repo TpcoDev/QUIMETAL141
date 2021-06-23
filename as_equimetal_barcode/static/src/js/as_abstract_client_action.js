@@ -176,6 +176,10 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     self.do_warn(false, _t('Scanning is disabled in this state'));
                     return Promise.resolve();
                 }
+                if(!resultado.product){
+                    self.do_warn(false, _t('PRODUCTO NO ESTA EN EL SISTEMA, DEBE CREARLO'));
+                    return Promise.resolve();
+                }
                 var commandeHandler = self.commands[barcode];
                 if (commandeHandler) {
                     return commandeHandler();
@@ -520,7 +524,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     handle_line();
 
                 } else {
-                    localStorage.setItem("linea_id", res.lineDescription.id);
+                    localStorage.setItem("linea_id", res.lineDescription.id || res.lineDescription.virtual_id);
                     if (self.scannedLines.indexOf(res.lineDescription.id) === -1) {
                         self.scannedLines.push(res.lineDescription.id || res.lineDescription.virtual_id);
                     }
