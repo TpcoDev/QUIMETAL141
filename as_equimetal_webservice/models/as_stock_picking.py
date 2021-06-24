@@ -120,12 +120,12 @@ class AsStockPicking(models.Model):
             try:
                 int(picking.name)
             except Exception as e:
-                errores+= '<b>* El nombre no puede tener letras solo Numeros</b><br/>'
+                errores+= '<b>* El nombre-docNum no puede tener letras solo Numeros</b><br/>'
                 cont_errores +=1
             try:
                 int(picking.origin)
             except Exception as e:
-                errores+= '<b>* El origen no puede tener letras solo Numeros</b><br/>'
+                errores+= '<b>* El origen-docNumSAP no puede tener letras solo Numeros</b><br/>'
                 cont_errores +=1
             #se ensamblan los stock.move
             for move_stock in picking.move_ids_without_package:
@@ -160,36 +160,48 @@ class AsStockPicking(models.Model):
                 if not picking.origin:
                     errores+= '<b>* Campo Origen No completado</b><br/>'
                     cont_errores +=1
-                vals_picking = {
-                    "docNum": str(picking.name),
-                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "docNumSAP": int(picking.origin),
-                    "warehouseCodeOrigin": picking.location_id.name,
-                    "warehouseCodeDestination": picking.location_dest_id.name,
-                    "cardCode": picking.partner_id.vat,
-                    "cardName": picking.partner_id.name,
-                    "detalle": picking_line,
-                }
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "docNumSAP": int(picking.origin),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "cardCode": picking.partner_id.vat,
+                        "cardName": picking.partner_id.name,
+                        "detalle": picking_line,
+                    }
             elif webservice in ('WS004'):
                 if not picking.as_ot_sap:
                     errores+= '<b>* OT SAP No completado</b><br/>'
                     cont_errores +=1
-                vals_picking = {
-                    "docNum": str(picking.name),
-                    "docNumSAP": str(picking.as_ot_sap),
-                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "warehouseCodeOrigin": picking.location_id.name,
-                    "warehouseCodeDestination": picking.location_dest_id.name,
-                    "detalle": picking_line,
-                }
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docNumSAP": str(picking.as_ot_sap),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "detalle": picking_line,
+                    }
             elif webservice in ('WS006','WS099'):
-                vals_picking = {
-                    "docNum": str(picking.name),
-                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "warehouseCodeOrigin": picking.location_id.name,
-                    "warehouseCodeDestination": picking.location_dest_id.name,
-                    "detalle": picking_line,
-                }
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "detalle": picking_line,
+                    }
             elif webservice in ('WS018'):
                 if not picking.partner_id:
                     errores+= '<b>* Cliente No seleccionado</b><br/>'
@@ -203,18 +215,22 @@ class AsStockPicking(models.Model):
                 if not picking.origin:
                     errores+= '<b>* Origen de movimiento no completado</b><br/>'
                     cont_errores +=1
-                vals_picking = {
-                    "docNum": str(picking.name),
-                    "DocDueDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "warehouseCodeOrigin": picking.location_id.name,
-                    "warehouseCodeDestination": picking.location_dest_id.name,
-                    "cardCode": picking.partner_id.vat,
-                    "cardName": picking.partner_id.name,
-                    "numFactura": str(picking.as_num_factura),
-                    "numGuiaDesp": str(picking.l10n_latam_document_number),
-                    "numOVAsoc": picking.origin,
-                    "detalle": picking_line,
-                }
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "DocDueDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "cardCode": picking.partner_id.vat,
+                        "cardName": picking.partner_id.name,
+                        "numFactura": str(picking.as_num_factura),
+                        "numGuiaDesp": str(picking.l10n_latam_document_number),
+                        "numOVAsoc": picking.origin,
+                        "detalle": picking_line,
+                    }
             elif webservice in ('WS021'):
                 if not picking.as_num_factura:
                     errores+= '<b>* Numero de Factura no completado</b><br/>'
@@ -222,14 +238,18 @@ class AsStockPicking(models.Model):
                 if not picking.l10n_latam_document_number:
                     errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
                     cont_errores +=1
-                vals_picking = {
-                    "docNum": str(picking.name),
-                    "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S')),
-                    "warehouseCodeDestination": picking.location_dest_id.name,
-                    "numFactura": str(picking.as_num_factura),
-                    "numGuiaDesp": str(picking.l10n_latam_document_number),
-                    "detalle": picking_line,
-                }
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "numFactura": str(picking.as_num_factura),
+                        "numGuiaDesp": str(picking.l10n_latam_document_number),
+                        "detalle": picking_line,
+                    }
 
             if cont_errores > 0:
                 self.message_post(body = errores)

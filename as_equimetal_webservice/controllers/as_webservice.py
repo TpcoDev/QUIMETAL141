@@ -410,7 +410,7 @@ class as_webservice_quimetal(http.Controller):
                                 uom_id = self.as_get_uom_id('uom.uom',move)
                                 if not uom_id:
                                     return {
-                                        "Token": token,
+                                        "Token": as_token,
                                         "RespCode": 0,
                                         "RespMessage": "Unidad de Medida no existe" 
                                     }
