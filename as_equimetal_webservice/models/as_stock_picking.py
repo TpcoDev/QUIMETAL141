@@ -1,0 +1,257 @@
+# -*- coding: utf-8 -*-
+from odoo import models, fields, api,_
+from odoo.http import request
+import requests, json
+from odoo.tests.common import Form
+
+address_webservice = {
+    'WS005':'/tpco/odoo/ws005',
+    'WS004':'/tpco/odoo/ws004',
+    'WS006':'/tpco/odoo/ws006',
+    'WS099':'/tpco/odoo/ws099',
+    'WS018':'/tpco/odoo/ws018',
+    'WS021':'/tpco/odoo/ws021',
+}
+
+class AsStockPicking(models.Model):
+    _inherit = 'stock.picking'
+
+    as_enviado_sap = fields.Boolean(string='Enviado a SAP')
+    as_webservice = fields.Selection(
+        [
+            ('WS005','WS005'),
+            ('WS004','WS004'),
+            ('WS006','WS006'),
+            ('WS099','WS099'),
+            ('WS018','WS018'),
+            ('WS021','WS021'),
+        ],
+        string="Webservice",
+    )
+    as_ot_num = fields.Integer(string='Numero Documento')
+    as_ot_sap = fields.Integer(string='OT SAP')
+    as_num_factura = fields.Char(string='Num de Factura')
+
+    def button_validate(self):
+        res = super().button_validate()
+        if self.picking_type_id.as_webservice:
+            self.action_picking_sap()
+        if self.picking_type_id.as_send_automatic:
+            self.as_send_email()
+        return res
+
+    def as_send_email(self):
+        ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
+        self.ensure_one()
+        template_id = self._find_mail_template()
+        lang = self.env.context.get('lang')
+        template = self.env['mail.template'].browse(template_id)
+        if template.lang:
+            lang = template._render_lang(self.ids)[self.id]
+        ctx = {
+            'default_model': 'stock.picking',
+            'default_res_id': self.ids[0],
+            'default_use_template': bool(template_id),
+            'default_template_id': template_id,
+            'default_composition_mode': 'comment',
+            'custom_layout': "mail.mail_notification_paynow",
+            'force_email': True,
+        }
+        wiz =  {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'mail.compose.message',
+            'views': [(False, 'form')],
+            'view_id': False,
+            'target': 'new',
+            'context': ctx,
+        }
+
+        wiz = Form(self.env['mail.compose.message'].with_context(ctx)).save()
+        wiz.action_send_mail()
+        self.message_post(body = "<b style='color:green;'>Enviado correo</b>")
+
+    def action_picking_sap(self):
+        if self.as_webservice:
+            webservice = self.as_webservice
+        else:
+            webservice = self.picking_type_id.as_webservice
+        if webservice:
+            try:
+                token = self.as_get_apikey(self.env.user.id)
+                if token != None:
+                    headerVal = {}
+                    # headerVal = {'Authorization': token}
+                    requestBody = {
+                        'res_id': self.name,
+                    }
+                    credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                    URL=credentials+address_webservice[webservice]
+                    r = requests.post(URL, json=requestBody, headers=headerVal)
+                    if r.ok:
+                        text = r.text
+                        info = json.loads(text)
+                        if info['result']['RespCode'] == 0:
+                            body =  "<b style='color:green'>EXITOSO ("+webservice+")!: </b><br>"
+                            body += '<b>'+info['result']['RespMessage']+'</b>'                        
+                        else:
+                            body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br>"
+                            body += '<b>'+info['result']['RespMessage']+'</b>'
+                    else:
+                        body =  "<b style='color:red'>ERROR ("+webservice+")!:</b><br> <b> No aceptado por SAP</b><br>" 
+                else:
+                    body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
+            except Exception as e:
+                body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>"
+                
+            self.message_post(body = body)
+        
+    def as_get_apikey(self,user_id):
+        query = self.env.cr.execute("""select key from res_users_apikeys where user_id ="""+str(user_id)+"""""")
+        result = self.env.cr.fetchall()
+        return result[0][0]
+
+    def as_assemble_picking_json(self,webservice):
+        picking_line = []
+        vals_picking_line = {}
+        cont_errores = 0
+        for picking in self:
+            errores = '<b style="color:orange;">Errores de formulario:</b><br/>'
+            try:
+                int(picking.name)
+            except Exception as e:
+                errores+= '<b>* El nombre-docNum no puede tener letras solo Numeros</b><br/>'
+                cont_errores +=1
+            try:
+                int(picking.origin)
+            except Exception as e:
+                errores+= '<b>* El origen-docNumSAP no puede tener letras solo Numeros</b><br/>'
+                cont_errores +=1
+            #se ensamblan los stock.move
+            for move_stock in picking.move_ids_without_package:
+                move = []
+                vals_move_line = {}
+                for move_line in move_stock.move_line_ids:
+                    if not move_line.lot_id:
+                        errores+= '<b>* Producto No posee Lote</b><br/>'
+                        cont_errores +=1
+                    vals_move_line.update({
+                        "distNumber": move_line.lot_id.name,
+                        "quantity": move_line.qty_done,
+                        "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                        "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                    })
+                    move.append(vals_move_line)
+                if not move_stock.product_id.default_code:
+                    errores+= '<b>* Producto No posee Referencia interna</b><br/>'
+                    cont_errores +=1
+                vals_picking_line.update({
+                    "itemCode": move_stock.product_id.default_code,
+                    "itemDescription": move_stock.product_id.name,
+                    "quantity": move_stock.quantity_done,
+                    "measureUnit": move_stock.product_uom.name,
+                    "lote": move,
+                })
+                picking_line.append(vals_picking_line)
+            if webservice == 'WS005':
+                if not picking.partner_id:
+                    errores+= '<b>* Cliente No seleccionado</b><br/>'
+                    cont_errores +=1
+                if not picking.origin:
+                    errores+= '<b>* Campo Origen No completado</b><br/>'
+                    cont_errores +=1
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "docNumSAP": int(picking.origin),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "cardCode": picking.partner_id.vat,
+                        "cardName": picking.partner_id.name,
+                        "detalle": picking_line,
+                    }
+            elif webservice in ('WS004'):
+                if not picking.as_ot_sap:
+                    errores+= '<b>* OT SAP No completado</b><br/>'
+                    cont_errores +=1
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docNumSAP": str(picking.as_ot_sap),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "detalle": picking_line,
+                    }
+            elif webservice in ('WS006','WS099'):
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "detalle": picking_line,
+                    }
+            elif webservice in ('WS018'):
+                if not picking.partner_id:
+                    errores+= '<b>* Cliente No seleccionado</b><br/>'
+                    cont_errores +=1
+                if not picking.as_num_factura:
+                    errores+= '<b>* Numero de Factura no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.l10n_latam_document_number:
+                    errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.origin:
+                    errores+= '<b>* Origen de movimiento no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "DocDueDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "cardCode": picking.partner_id.vat,
+                        "cardName": picking.partner_id.name,
+                        "numFactura": str(picking.as_num_factura),
+                        "numGuiaDesp": str(picking.l10n_latam_document_number),
+                        "numOVAsoc": picking.origin,
+                        "detalle": picking_line,
+                    }
+            elif webservice in ('WS021'):
+                if not picking.as_num_factura:
+                    errores+= '<b>* Numero de Factura no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.l10n_latam_document_number:
+                    errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
+                    cont_errores +=1
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "numFactura": str(picking.as_num_factura),
+                        "numGuiaDesp": str(picking.l10n_latam_document_number),
+                        "detalle": picking_line,
+                    }
+
+            if cont_errores > 0:
+                self.message_post(body = errores)
+            self.message_post(body = vals_picking)
+        return vals_picking
