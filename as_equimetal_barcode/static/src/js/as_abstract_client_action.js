@@ -14,7 +14,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
     var SettingsWidget = require('stock_barcode.SettingsWidget');
     var utils = require('web.utils');
     var _t = core._t;
-    var vals_resp 
+    var vals_resp
 
     function urlParam2(name) {
         var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -71,37 +71,37 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
         _asAutoSearchBarcode: function (ev) {
             var barcode = $('#barman').val();
             localStorage.setItem("linea_id", "");
-            
+
             console.log("barcode:" + barcode);
 
             this._onBarcodeScannedHandler(barcode);
             // Recuperar el ID de la linea creada o seleccionada
             // var id = $(ev.target).parents('.o_barcode_line').data('id');
-            
-            setTimeout(function() { 
+
+            setTimeout(function () {
                 var id = localStorage.getItem("linea_id");
-                console.log("id:"+ id);
-                $('.o_barcode_line').each(function(i, obj) {
+                console.log("id:" + id);
+                $('.o_barcode_line').each(function (i, obj) {
                     // console.log("LL" + obj.innerHTML);
                     var theid = $(this).attr("data-id");
                     console.log(theid);
-                    
-                    if (theid == id){
+
+                    if (theid == id) {
                         $(this).find("a").click();
                         console.log("editando");
-                        setTimeout(function() { 
+                        setTimeout(function () {
                             $("input[name='qty_done']").select();
                         }, 1500);
                     }
                 });
-            }, 1000);
-        
+            }, 2000);
+
         },
         start: function () {
             var self = this;
             // this.$('.o_content').addClass('o_barcode_client_action');
             // core.bus.on('barcode_scanned', this, this._onBarcodeScannedHandler);
-    
+
             this.headerWidget = new HeaderWidget(this);
             this.settingsWidget = new SettingsWidget(this, this.actionParams.model, this.mode, this.allow_scrap);
             return this._super.apply(this, arguments).then(function () {
@@ -136,18 +136,18 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             // barcode = '104443391MPQUI01117210308';
             //llamando a endpoint barcode
             var urlcadena = window.location.origin + '/quimetal/barcode' + '?barcode=' + barcode;
-            
-            
+
+
             $.ajax({
                 url: urlcadena,
                 global: false,
-                async:false,
+                async: false,
                 success: function (respuesta) {
                     window.val1 = JSON.parse(respuesta);
                     vals_resp = JSON.parse(respuesta);
                     console.log('IDs: ' + (vals_resp.result))
                     // alert(vals_resp.result)
-                    
+
                 },
                 error: function () {
                     console.log("No se ha podido obtener la información");
@@ -176,7 +176,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     self.do_warn(false, _t('Scanning is disabled in this state'));
                     return Promise.resolve();
                 }
-                if(!resultado.product){
+                if (!resultado.product) {
                     self.do_warn(false, _t('PRODUCTO NO ESTA EN EL SISTEMA, DEBE CREARLO'));
                     return Promise.resolve();
                 }
@@ -194,26 +194,28 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
         },
 
         /**
-             * Handle what needs to be done when a product is scanned.
-             *
-             * @param {string} barcode scanned barcode
-             * @param {Object} linesActions
-             * @returns {Promise}
-             */
-        _step_product: function (barcode, linesActions) {
+         * Handle what needs to be done when a product is scanned.
+         *
+         * @param {string} barcode scanned barcode
+         * @param {Object} linesActions
+         * @returns {Promise}
+         */
+        _step_product: async function (barcode, linesActions) {
             var self = this;
             this.currentStep = 'product';
             this.stepState = $.extend(true, {}, this.currentState);
             var errorMessage;
 
-            var product = this._isProduct(barcode);
+            var product = await this._isProduct(barcode);
             if (product) {
                 if (product.tracking !== 'none' && self.requireLotNumber) {
                     this.currentStep = 'lot';
                 }
-                // obtiene el id de la linea a modificar
-                var res = this._incrementLines({'product': product, 'barcode': barcode});
-                console.log("resres:"+JSON.stringify(res.id));
+                var res = this._incrementLines({
+                    'product': product,
+                    'barcode': barcode
+                });
+                console.log("resres:" + JSON.stringify(res.id));
                 localStorage.setItem("linea_id", res.id);
                 if (res.isNewLine) {
                     if (this.actionParams.model === 'stock.inventory') {
@@ -229,7 +231,9 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                             res.lineDescription.theoretical_qty = theoretical_qty;
                             linesActions.push([self.linesWidget.addProduct, [res.lineDescription, self.actionParams.model]]);
                             self.scannedLines.push(res.id || res.virtualId);
-                            return Promise.resolve({linesActions: linesActions});
+                            return Promise.resolve({
+                                linesActions: linesActions
+                            });
                         });
                     } else {
                         linesActions.push([this.linesWidget.addProduct, [res.lineDescription, this.actionParams.model]]);
@@ -244,17 +248,21 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     }
                 }
                 this.scannedLines.push(res.id || res.virtualId);
-                return Promise.resolve({linesActions: linesActions});
+                return Promise.resolve({
+                    linesActions: linesActions
+                });
             } else {
                 var success = function (res) {
-                    return Promise.resolve({linesActions: res.linesActions});
+                    return Promise.resolve({
+                        linesActions: res.linesActions
+                    });
                 };
                 var fail = function (specializedErrorMessage) {
                     self.currentStep = 'product';
-                    if (specializedErrorMessage){
+                    if (specializedErrorMessage) {
                         return Promise.reject(specializedErrorMessage);
                     }
-                    if (! self.scannedLines.length) {
+                    if (!self.scannedLines.length) {
                         if (self.groups.group_tracking_lot) {
                             errorMessage = _t("You are expected to scan one or more products or a package available at the picking's location");
                         } else {
@@ -284,8 +292,8 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
          * @param {Object} linesActions
          * @returns {Promise}
          */
-        _step_lot: function (barcode, linesActions) {
-            if (! this.groups.group_production_lot || !this.requireLotNumber)  {
+        _step_lot: async function (barcode, linesActions) {
+            if (!this.groups.group_production_lot || !this.requireLotNumber) {
                 return Promise.reject();
             }
             this.currentStep = 'lot';
@@ -294,7 +302,8 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             var self = this;
 
             // Bypass this step if needed.
-            if (this.productsByBarcode[barcode]) {
+            var product = await this._isProduct(barcode);
+            if (product) {
                 return this._step_product(barcode, linesActions);
             } else if (this.locationsByBarcode[barcode]) {
                 return this._step_destination(barcode, linesActions);
@@ -302,14 +311,12 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
 
             var getProductFromLastScannedLine = function () {
                 if (self.scannedLines.length) {
-                    var idOrVirtualId2 = self.scannedLines[self.scannedLines.length+1];
+                    var idOrVirtualId2 = self.scannedLines[self.scannedLines.length + 1];
                     var idOrVirtualId = self.scannedLines[self.scannedLines.length - 1];
                     var line = _.find(self._getLines(self.currentState), function (line) {
                         return line.virtual_id === idOrVirtualId || line.id === idOrVirtualId;
                     });
                     if (line) {
-                        
-
                         var product = self.productsByBarcode[line.product_barcode || line.product_id.barcode];
                         // Product was added by lot or package
                         if (!product) {
@@ -386,15 +393,15 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                 });
                 var products = getProductFromLastScannedLine();
                 var product_id = _.intersection(products, products_in_lots);
-                if (! product_id.length) {
+                if (!product_id.length) {
                     products = getProductFromCurrentPage();
                     product_id = _.intersection(products, products_in_lots);
                 }
-                if (! product_id.length) {
+                if (!product_id.length) {
                     products = getProductFromOperation();
                     product_id = _.intersection(products, products_in_lots);
                 }
-                if (! product_id.length) {
+                if (!product_id.length) {
                     product_id = [lots[0].product_id[0]];
                 }
                 return readProductQuant(product_id[0], lots);
@@ -433,12 +440,13 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     def = self._rpc({
                         model: 'stock.production.lot',
                         method: 'search_read',
-                        domain: [['name', '=', barcode]],
+                        domain: [
+                            ['name', '=', barcode]
+                        ],
                     });
                 }
                 return def.then(function (res) {
-                    
-                    if (! res.length) {
+                    if (!res.length) {
                         errorMessage = _t('The scanned lot does not match an existing one.');
                         return Promise.reject(errorMessage);
                     }
@@ -460,16 +468,19 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
 
             var def;
             if (this.currentState.use_create_lots &&
-                ! this.currentState.use_existing_lots) {
+                !this.currentState.use_existing_lots) {
                 // Do not create lot if product is not set. It could happens by a
                 // direct lot scan from product or source location step.
                 var product = getProductFromLastScannedLine();
-                if (! product  || product.tracking === "none") {
+                if (!product || product.tracking === "none") {
                     return Promise.reject();
                 }
-                def = Promise.resolve({lot_name: barcode, product: product});
-            } else if (! this.currentState.use_create_lots &&
-                        this.currentState.use_existing_lots) {
+                def = Promise.resolve({
+                    lot_name: barcode,
+                    product: product
+                });
+            } else if (!this.currentState.use_create_lots &&
+                this.currentState.use_existing_lots) {
                 def = searchRead(barcode);
             } else {
                 def = searchRead(barcode).then(function (res) {
@@ -478,7 +489,11 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     var product = getProductFromLastScannedLine();
                     if (product && product.tracking !== "none") {
                         return create(barcode, product).then(function (lot_id) {
-                            return Promise.resolve({lot_id: lot_id, lot_name: barcode, product: product});
+                            return Promise.resolve({
+                                lot_id: lot_id,
+                                lot_name: barcode,
+                                product: product
+                            });
                         });
                     }
                     return Promise.reject(errorMessage);
@@ -486,7 +501,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             }
             return def.then(function (lot_info) {
                 var product = lot_info.product;
-                if (product.tracking === 'serial' && self._lot_name_used(product, barcode)){
+                if (product.tracking === 'serial' && self._lot_name_used(product, barcode)) {
                     errorMessage = _t('The scanned serial number is already used.');
                     return Promise.reject(errorMessage);
                 }
@@ -500,7 +515,8 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                 });
                 if (res.isNewLine) {
                     localStorage.setItem("linea_id", res.lineDescription.virtual_id);
-                    function handle_line(){
+
+                    function handle_line() {
                         self.scannedLines.push(res.lineDescription.virtual_id);
                         linesActions.push([self.linesWidget.addProduct, [res.lineDescription, self.actionParams.model]]);
                     }
@@ -518,7 +534,9 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                         }).then(function (theoretical_qty) {
                             res.lineDescription.theoretical_qty = theoretical_qty;
                             handle_line();
-                            return Promise.resolve({linesActions: linesActions});
+                            return Promise.resolve({
+                                linesActions: linesActions
+                            });
                         });
                     }
                     handle_line();
@@ -531,7 +549,9 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     linesActions.push([self.linesWidget.incrementProduct, [res.id || res.virtualId, 1, self.actionParams.model]]);
                     linesActions.push([self.linesWidget.setLotName, [res.id || res.virtualId, barcode]]);
                 }
-                return Promise.resolve({linesActions: linesActions});
+                return Promise.resolve({
+                    linesActions: linesActions
+                });
             });
         },
 
