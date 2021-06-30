@@ -97,6 +97,79 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             }, 2000);
 
         },
+        /**
+         * Main method called when a quantity needs to be incremented or a lot set on a line.
+         * it calls `this._findCandidateLineToIncrement` first, if nothing is found it may use
+         * `this._makeNewLine`.
+         *
+         * @private
+         * @param {Object} params information needed to find the potential candidate line
+         * @param {Object} params.product
+         * @param {Object} params.lot_id
+         * @param {Object} params.lot_name
+         * @param {Object} params.package_id
+         * @param {Object} params.result_package_id
+         * @param {Boolean} params.doNotClearLineHighlight don't clear the previous line highlight when
+         *     highlighting a new one
+         * @return {object} object wrapping the incremented line and some other informations
+         */
+        _incrementLines: function (params) {
+            var line = this._findCandidateLineToIncrement(params);
+            var isNewLine = false;
+            if (line) {
+                // Update the line with the processed quantity.
+                if (params.product.tracking === 'none' ||
+                    params.lot_id ||
+                    params.lot_name ||
+                    !this.requireLotNumber
+                    ) {
+                    if (this._isPickingRelated()) {
+                        line.qty_done += 0;
+                        if (params.package_id) {
+                            line.package_id = params.package_id;
+                        }
+                        if (params.result_package_id) {
+                            line.result_package_id = params.result_package_id;
+                        }
+                    } else if (this.actionParams.model === 'stock.inventory') {
+                        line.product_qty += 0;
+                    }
+                }
+            } else if (this._isAbleToCreateNewLine()) {
+                isNewLine = true;
+                // Create a line with the processed quantity.
+                if (params.product.tracking === 'none' ||
+                    params.lot_id ||
+                    params.lot_name ||
+                    !this.requireLotNumber
+                    ) {
+                    params.qty_done = 0;
+                } else {
+                    params.qty_done = 0;
+                }
+                line = this._makeNewLine(params);
+                this._getLines(this.currentState).push(line);
+                this.pages[this.currentPageIndex].lines.push(line);
+            }
+            if (this._isPickingRelated()) {
+                if (params.lot_id) {
+                    line.lot_id = [params.lot_id];
+                }
+                if (params.lot_name) {
+                    line.lot_name = params.lot_name;
+                }
+            } else if (this.actionParams.model === 'stock.inventory') {
+                if (params.lot_id) {
+                    line.prod_lot_id = [params.lot_id, params.lot_name];
+                }
+            }
+            return {
+                'id': line.id,
+                'virtualId': line.virtual_id,
+                'lineDescription': line,
+                'isNewLine': isNewLine,
+            };
+        },
         start: function () {
             var self = this;
             // this.$('.o_content').addClass('o_barcode_client_action');
@@ -127,15 +200,20 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
         _onBarcodeScannedHandler: function (barcode) {
             var resultado = {}
             var self = this;
+            var existe_order = true
             self.requireLotNumber = true;
             var debug_gs1 = urlParam2('debug_gs1');
             if (debug_gs1) {
                 barcode = debug_gs1;
                 // alert(debug_gs1)
             }
+            var create_lot = false
+            if (self.currentState.picking_type_id[1] != "Maipú: Transferencias  a Despacho"){
+                create_lot = true
+            }
             // barcode = '104443391MPQUI01117210308';
             //llamando a endpoint barcode
-            var urlcadena = window.location.origin + '/quimetal/barcode' + '?barcode=' + barcode;
+            var urlcadena = window.location.origin + '/quimetal/barcode' + '?barcode=' + barcode +'&create='+ create_lot;
 
 
             $.ajax({
@@ -170,6 +248,15 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                 $('#as_barcode_scanned2').text("");
                 $('#barman').val("");
             }
+            
+            var lines_with_lot = _.filter(self.currentState.move_line_ids, function (line) {
+                return (line.lot_id && line.lot_id[1] === barcode) || line.lot_name === barcode;
+            });
+            if (lines_with_lot<=0) {
+                existe_order = false
+            }
+
+            
 
             this.mutex.exec(function () {
                 if (self.mode === 'done' || self.mode === 'cancel') {
@@ -179,6 +266,16 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                 if (!resultado.product) {
                     self.do_warn(false, _t('PRODUCTO NO ESTA EN EL SISTEMA, DEBE CREARLO'));
                     return Promise.resolve();
+                }
+                if (self.currentState.picking_type_id[1] != "Maipú: Transferencias  a Despacho"){
+                    if (!existe_order && !resultado.existe) {
+                        self.do_warn(false, _t('PRODUCTO-LOTE NO ESTA EN EL SISTEMA'));
+                        return Promise.resolve();
+                    }
+                    if (!existe_order) {
+                        self.do_warn(false, _t('PRODUCTO-LOTE NO ESTA EN LA ORDEN'));
+                        return Promise.resolve();
+                    }
                 }
                 var commandeHandler = self.commands[barcode];
                 if (commandeHandler) {

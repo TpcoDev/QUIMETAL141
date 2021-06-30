@@ -17,6 +17,7 @@ class as_barcode_quimetal(http.Controller):
     def barcode(self, **post):
         # order_reference = row_id
         barcode = post.get('barcode') or None
+        create_lot = post.get('create') or None
 
         # barcode = barcode.replace("|","\x1d")
         # barcode = '10455\x1d91MPFIL093\x1d3721\x1d310000031517210308'
@@ -37,6 +38,7 @@ class as_barcode_quimetal(http.Controller):
                     'barcode': barcode,
                     'product': False,
                     'result': json.dumps(result),
+                    'existe': True,
                 }
             else:
                 lot_id = request.env['stock.production.lot'].sudo().search([('name','=',lote)],limit=1)
@@ -47,27 +49,39 @@ class as_barcode_quimetal(http.Controller):
                         'barcode': barcode,
                         'product': product_code,
                         'result': json.dumps(result),
+                        'existe': True,
                     }
                     lot_id.message_post(body = barcode)
                 else:
-                    lot_id = request.env['stock.production.lot'].sudo().create({
-                            'product_id': product_id.id,
-                            'name': lote,
-                            'company_id': request.env.user.company_id.id,
-                        })
-                    vals2={
-                        'type':True,
-                        'lote': lot_id.name,
-                        'barcode': barcode,
-                        'product': product_code,
-                        'result': json.dumps(result),
-                    }      
-                    lot_id.message_post(body = barcode)     
+                    if not create_lot:
+                        vals2={
+                            'type':True,
+                            'lote': lote,
+                            'barcode': barcode,
+                            'product': product_code,
+                            'result': json.dumps(result),
+                            'existe': False,
+                        }
+                    else:
+                        lot_id = request.env['stock.production.lot'].sudo().create({
+                                'product_id': product_id.id,
+                                'name': lote,
+                                'company_id': request.env.user.company_id.id,
+                            })
+                        vals2={
+                            'type':True,
+                            'lote': lot_id.name,
+                            'barcode': barcode,
+                            'product': product_code,
+                            'result': json.dumps(result),
+                        }      
+                        lot_id.message_post(body = barcode)     
         except Exception as e:
             vals2={
                 'type':False,
                 'barcode': barcode,
                 'result': json.dumps(result),
+                'existe': False,
             
             }
         log_id = request.env['as.barcode.log'].sudo().create({
