@@ -16,7 +16,7 @@ class StockMoveLine(models.Model):
             picking = self.env['stock.picking'].search([('origin','=',line.origin),('state','!=','cancel'),('id','!=',line.id)],limit=1)
             line.as_picking_o = picking
 
-    def _get_share_url(self, redirect=False, signup_partner=False, pid=None):
+    def _get_share_url(self, redirect=False, signup_partner=False, share_token=None):
         """
         Build the url of the record  that will be sent by mail and adds additional parameters such as
         access_token to bypass the recipient's rights,
@@ -24,7 +24,7 @@ class StockMoveLine(models.Model):
         hash token to allow the user to be authenticated in the chatter of the record portal view, if applicable
         :param redirect : Send the redirect url instead of the direct portal share url
         :param signup_partner: allows the user to create an account with pre-filled fields.
-        :param pid: = partner_id - when given, a hash is generated to allow the user to be authenticated
+        :param share_token: = partner_id - when given, a hash is generated to allow the user to be authenticated
             in the portal chatter, if any in the target page,
             if the user is redirected to the portal instead of the backend.
         :return: the url of the record with access parameters, if any.
@@ -36,9 +36,9 @@ class StockMoveLine(models.Model):
         }
         if hasattr(self, 'access_token'):
             params['access_token'] = self._portal_ensure_token()
-        if pid:
-            params['pid'] = pid
-            params['hash'] = self._sign_token(pid)
+        if share_token:
+            params['share_token'] = share_token
+            params['hash'] = self._sign_token(share_token)
         if signup_partner and hasattr(self, 'partner_id') and self.partner_id:
             params.update(self.partner_id.signup_get_auth_param()[self.partner_id.id])
 
