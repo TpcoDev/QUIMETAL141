@@ -162,7 +162,7 @@ class AsStockPicking(models.Model):
                     int(picking.origin)
                 except Exception as e:
                     errores+= '<b>* El origen-docNumSAP no puede tener letras solo Numeros</b><br/>'
-                cont_errores +=1
+                    cont_errores +=1
                 if not picking.partner_id:
                     errores+= '<b>* Cliente No seleccionado</b><br/>'
                     cont_errores +=1
