@@ -19,3 +19,19 @@ class PickingType(models.Model):
         string="Webservice",
     )
     as_send_automatic = fields.Boolean(string='Enviar Correo al confirmar')
+
+class PickingType(models.Model):
+    _inherit = "stock.location"
+
+    as_webservice = fields.Selection(
+        [
+            ('WS005','WS005'),
+            ('WS004','WS004'),
+            ('WS006','WS006'),
+            ('WS099','WS099'),
+            ('WS018','WS018'),
+            ('WS021','WS021'),
+        ],
+        string="Webservice",
+    )
+    as_send_automatic = fields.Boolean(string='Enviar Correo al confirmar')

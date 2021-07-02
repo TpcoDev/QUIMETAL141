@@ -136,7 +136,7 @@ class as_webservice_quimetal(http.Controller):
                                                         'product_uom': producto_uom_id,
                                                         "price_unit":1,
                                                         "qty_received_manual":0,
-                                                        "date_planned":"2021-04-21 10:00:00",
+                                                        # "date_planned":"2021-04-21 10:00:00",
                                                         "taxes_id":[[6,False,[]]],
                                                         "analytic_tag_ids":[
                                                         [6,False,[]]],} )
@@ -153,7 +153,7 @@ class as_webservice_quimetal(http.Controller):
                             'currency_id': 2, 
                             'date_order': date_order,
                             'date_approve': date_approve, 
-                            'date_planned': '2021-04-23 10:00:00', 
+                            # 'date_planned': '2021-04-23 10:00:00', 
                             'receipt_reminder_email': False, 
                             'reminder_date_before_receipt': 1, 
                             'notes': post['CardCode'], 
@@ -301,6 +301,7 @@ class as_webservice_quimetal(http.Controller):
                         venta_nueva = {
                             'name': post['DocNum'], 
                             'origin': post['DocNum'],
+                            'as_num_comex': post['NumAtcard'],
                             # 'priority': '0', 
                             'partner_id': cliente_id, 
                             # 'partner_ref': False, 
@@ -398,7 +399,7 @@ class as_webservice_quimetal(http.Controller):
                             picking = request.env['stock.picking'].sudo().create({
                                     'location_id': slo,
                                     'date': docdate,
-                                    'date_done': docdate,
+                                    'scheduled_date': docdate,
                                     'location_dest_id': sld,
                                     'as_ot_num': post['params']['DocNum'],
                                     'origin': post['params']['DocNum'],
@@ -431,7 +432,7 @@ class as_webservice_quimetal(http.Controller):
                                         'picking_id': move1.picking_id.id,
                                         'move_id': move1.id,
                                         'product_id': product_id,
-                                        'qty_done': move_line['Quantity'],
+                                        'product_uom_qty': move_line['Quantity'],
                                         'product_uom_id': uom_id,
                                         'location_id': move1.location_id.id,
                                         'location_dest_id': move1.location_dest_id.id,
@@ -439,6 +440,8 @@ class as_webservice_quimetal(http.Controller):
                                         "company_id": request.env.user.company_id.id,
                                     })
                                 picking.action_confirm()
+                                picking.action_assign()
+                                picking.scheduled_date= picking.date
                             self.create_message_log("ws023",as_token,post,'ACEPTADO','OT recibidas correctamente')
                             return mensaje_correcto
                         else:

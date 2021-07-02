@@ -31,12 +31,18 @@ class AsStockPicking(models.Model):
     as_ot_num = fields.Integer(string='Numero Documento')
     as_ot_sap = fields.Integer(string='OT SAP')
     as_num_factura = fields.Char(string='Num de Factura')
+    as_guia_sap = fields.Char(string='Guía SAP')
 
     def button_validate(self):
         res = super().button_validate()
+        self.date_done = fields.Datetime.now()
         if self.picking_type_id.as_webservice:
             self.action_picking_sap()
+        if self.location_id.as_webservice and not self.picking_type_id.as_webservice:
+            self.action_picking_sap()
         if self.picking_type_id.as_send_automatic:
+            self.as_send_email()
+        if self.location_id.as_send_automatic and not self.picking_type_id.as_send_automatic:
             self.as_send_email()
         return res
 
@@ -75,7 +81,10 @@ class AsStockPicking(models.Model):
         if self.as_webservice:
             webservice = self.as_webservice
         else:
-            webservice = self.picking_type_id.as_webservice
+            if self.picking_type_id.as_webservice:
+                webservice = self.picking_type_id.as_webservice
+            else:
+                webservice = self.location_id.as_webservice
         if webservice:
             try:
                 token = self.as_get_apikey(self.env.user.id)
@@ -117,16 +126,11 @@ class AsStockPicking(models.Model):
         cont_errores = 0
         for picking in self:
             errores = '<b style="color:orange;">Errores de formulario:</b><br/>'
-            try:
-                int(picking.name)
-            except Exception as e:
-                errores+= '<b>* El nombre-docNum no puede tener letras solo Numeros</b><br/>'
-                cont_errores +=1
-            try:
-                int(picking.origin)
-            except Exception as e:
-                errores+= '<b>* El origen-docNumSAP no puede tener letras solo Numeros</b><br/>'
-                cont_errores +=1
+            # try:
+            #     int(picking.name)
+            # except Exception as e:
+            #     errores+= '<b>* El nombre-docNum no puede tener letras solo Numeros</b><br/>'
+            #     cont_errores +=1
             #se ensamblan los stock.move
             for move_stock in picking.move_ids_without_package:
                 move = []
@@ -154,6 +158,11 @@ class AsStockPicking(models.Model):
                 })
                 picking_line.append(vals_picking_line)
             if webservice == 'WS005':
+                try:
+                    int(picking.origin)
+                except Exception as e:
+                    errores+= '<b>* El origen-docNumSAP no puede tener letras solo Numeros</b><br/>'
+                cont_errores +=1
                 if not picking.partner_id:
                     errores+= '<b>* Cliente No seleccionado</b><br/>'
                     cont_errores +=1
@@ -197,6 +206,7 @@ class AsStockPicking(models.Model):
                 if cont_errores <=0:
                     vals_picking = {
                         "docNum": str(picking.name),
+                        "docNumSAP": str(picking.as_ot_sap),
                         "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
                         "warehouseCodeOrigin": picking.location_id.name,
                         "warehouseCodeDestination": picking.location_dest_id.name,
@@ -209,7 +219,7 @@ class AsStockPicking(models.Model):
                 if not picking.as_num_factura:
                     errores+= '<b>* Numero de Factura no completado</b><br/>'
                     cont_errores +=1
-                if not picking.l10n_latam_document_number:
+                if not picking.as_guia_sap:
                     errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
                     cont_errores +=1
                 if not picking.origin:
@@ -227,7 +237,7 @@ class AsStockPicking(models.Model):
                         "cardCode": picking.partner_id.vat,
                         "cardName": picking.partner_id.name,
                         "numFactura": str(picking.as_num_factura),
-                        "numGuiaDesp": str(picking.l10n_latam_document_number),
+                        "numGuiaDesp": str(picking.as_guia_sap),
                         "numOVAsoc": picking.origin,
                         "detalle": picking_line,
                     }
@@ -235,7 +245,7 @@ class AsStockPicking(models.Model):
                 if not picking.as_num_factura:
                     errores+= '<b>* Numero de Factura no completado</b><br/>'
                     cont_errores +=1
-                if not picking.l10n_latam_document_number:
+                if not picking.as_guia_sap:
                     errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
                     cont_errores +=1
                 if not picking.date_done:
@@ -247,7 +257,7 @@ class AsStockPicking(models.Model):
                         "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
                         "warehouseCodeDestination": picking.location_dest_id.name,
                         "numFactura": str(picking.as_num_factura),
-                        "numGuiaDesp": str(picking.l10n_latam_document_number),
+                        "numGuiaDesp": str(picking.as_guia_sap),
                         "detalle": picking_line,
                     }
 

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name' : "Ahorasoft EQUIMETAL customizaciones",
-    'version' : "1.1.0",
+    'version' : "1.1.1",
     'author'  : "Ahorasoft",
     'description': """
 Webservice dummy equimetal
@@ -15,7 +15,6 @@ Custom module for Latproject
         "purchase",
         "stock",
         "sale_management",
-        "l10n_cl_edi_stock",
         "as_stock_equimetal",
         ],
     'website': 'http://www.ahorasoft.com',
@@ -24,6 +23,7 @@ Custom module for Latproject
             'views/as_mesage_log.xml',
             'views/as_stock_picking.xml',
             'views/as_res_config.xml',
+            'views/as_sale_order.xml',
             'views/stock_picking_views.xml',
              ],
     'demo' : [],
