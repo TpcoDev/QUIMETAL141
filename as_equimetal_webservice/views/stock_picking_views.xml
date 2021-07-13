@@ -8,6 +8,7 @@
             <xpath expr="//field[@name='barcode']" position="before">
                 <field name="as_webservice" />
                 <field name="as_send_automatic" />
+                <field name="as_rest_factura" />
 
             </xpath>
         </field>

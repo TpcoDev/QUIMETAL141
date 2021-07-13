@@ -3,6 +3,7 @@ from odoo import models, fields, api,_
 from odoo.http import request
 import requests, json
 from odoo.tests.common import Form
+from odoo.exceptions import UserError
 
 address_webservice = {
     'WS005':'/tpco/odoo/ws005',
@@ -35,16 +36,24 @@ class AsStockPicking(models.Model):
 
     def button_validate(self):
         res = super().button_validate()
-        self.date_done = fields.Datetime.now()
-        if self.picking_type_id.as_webservice:
-            self.action_picking_sap()
-        if self.location_id.as_webservice and not self.picking_type_id.as_webservice:
-            self.action_picking_sap()
-        if self.picking_type_id.as_send_automatic:
-            self.as_send_email()
-        if self.location_id.as_send_automatic and not self.picking_type_id.as_send_automatic:
-            self.as_send_email()
+        self.validate_webservice()
         return res
+    
+    def validate_webservice(self):
+        if self.state == 'done':
+            if self.picking_type_id.as_rest_factura and not self.as_num_factura and not self.as_guia_sap:
+                raise UserError('El Num de Factura y Guía SAP no puede estar vacio')
+            self.date_done = fields.Datetime.now()
+            self.env.cr.commit()
+            if self.picking_type_id.as_webservice:
+                self.action_picking_sap()
+            if self.location_id.as_webservice and not self.picking_type_id.as_webservice:
+                self.action_picking_sap()
+            if self.picking_type_id.as_send_automatic:
+                self.as_send_email()
+            if self.location_id.as_send_automatic and not self.picking_type_id.as_send_automatic:
+                self.as_send_email()
+        return True
 
     def as_send_email(self):
         ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
@@ -184,9 +193,25 @@ class AsStockPicking(models.Model):
                         "detalle": picking_line,
                     }
             elif webservice in ('WS004'):
+                ubicacion_origen = picking.location_id.name
+                if ubicacion_origen == 'Production':
+                    ubicacion_origen = 'TRLA'
                 if not picking.as_ot_sap:
                     errores+= '<b>* OT SAP No completado</b><br/>'
                     cont_errores +=1
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docNumSAP": str(picking.as_ot_sap),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "warehouseCodeOrigin": ubicacion_origen,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "detalle": picking_line,
+                    }
+            elif webservice in ('WS006'):
                 if not picking.date_done:
                     errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
                     cont_errores +=1
@@ -199,7 +224,10 @@ class AsStockPicking(models.Model):
                         "warehouseCodeDestination": picking.location_dest_id.name,
                         "detalle": picking_line,
                     }
-            elif webservice in ('WS006','WS099'):
+            elif webservice in ('WS099'):
+                ubicacion_origen = picking.location_id.name
+                if ubicacion_origen == 'Production':
+                    ubicacion_origen = 'TRLA'
                 if not picking.date_done:
                     errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
                     cont_errores +=1
@@ -208,7 +236,7 @@ class AsStockPicking(models.Model):
                         "docNum": str(picking.name),
                         "docNumSAP": str(picking.as_ot_sap),
                         "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
-                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeOrigin": ubicacion_origen,
                         "warehouseCodeDestination": picking.location_dest_id.name,
                         "detalle": picking_line,
                     }

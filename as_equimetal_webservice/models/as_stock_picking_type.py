@@ -19,6 +19,7 @@ class PickingType(models.Model):
         string="Webservice",
     )
     as_send_automatic = fields.Boolean(string='Enviar Correo al confirmar')
+    as_rest_factura = fields.Boolean(string='Restricción de Num Factura y Guia de Despacho',default=False)
 
 class PickingType(models.Model):
     _inherit = "stock.location"

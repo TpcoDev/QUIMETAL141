@@ -402,6 +402,7 @@ class as_webservice_quimetal(http.Controller):
                                     'scheduled_date': docdate,
                                     'location_dest_id': sld,
                                     'as_ot_num': post['params']['DocNum'],
+                                    'as_ot_sap': post['params']['DocNum'],
                                     'origin': post['params']['DocNum'],
                                     'picking_type_id': picking_type_id.id,
                                     "company_id": request.env.user.company_id.id,
@@ -416,6 +417,9 @@ class as_webservice_quimetal(http.Controller):
                                         "RespMessage": "Unidad de Medida no existe" 
                                     }
                                 product_id = self.as_get_product_id(move,uom_id)
+                                cantidad = 0.0
+                                for move_line in move['Detalle']:
+                                    cantidad+=move_line['Quantity']
                                 move1 = request.env['stock.move'].sudo().create({
                                     'name': move['ItemDescription'],
                                     'location_id': slo,
@@ -423,7 +427,8 @@ class as_webservice_quimetal(http.Controller):
                                     'picking_id': picking.id,
                                     'product_id': product_id,
                                     'product_uom': uom_id,
-                                    'product_uom_qty': move['Quantity'],
+                                    'product_uom_qty': cantidad,
+                                    # 'quantity_done': move['Quantity'],
                                     "company_id": request.env.user.company_id.id,
                                 })
                                 for move_line in move['Detalle']:
