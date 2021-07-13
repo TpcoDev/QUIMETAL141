@@ -97,6 +97,95 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             }, 2000);
 
         },
+
+        /**
+         * Loop over the lines displayed in the current pages and try to find a candidate to increment
+         * according to the `params` argument.
+         *
+         * @private
+         * @param {Object} params information needed to find the candidate line
+         * @param {Object} params.product
+         * @param {Object} params.lot_id
+         * @param {Object} params.lot_name
+         * @returns object|boolean line or false if nothing match
+         */
+        _findCandidateLineToIncrement: function (params) {
+            var product = params.product;
+            var lotId = params.lot_id;
+            var lotName = params.lot_name;
+            var packageId = params.package_id;
+            var currentPage = this.pages[this.currentPageIndex];
+            var res = false;
+            for (var z = 0; z < currentPage.lines.length; z++) {
+                var lineInCurrentPage = currentPage.lines[z];
+                if (lineInCurrentPage.product_id.id === product.id) {
+                    // If the line is empty, we could re-use it.
+                    if (lineInCurrentPage.virtual_id &&
+                        (this.actionParams.model === 'stock.picking' &&
+                        ! lineInCurrentPage.qty_done &&
+                        ! lineInCurrentPage.product_uom_qty &&
+                        ! lineInCurrentPage.lot_id &&
+                        ! lineInCurrentPage.lot_name &&
+                        ! lineInCurrentPage.package_id
+                        ) ||
+                        (this.actionParams.model === 'stock.inventory' &&
+                        ! lineInCurrentPage.product_qty &&
+                        ! lineInCurrentPage.prod_lot_id
+                        )
+                    ) {
+                        res = lineInCurrentPage;
+                        break;
+                    }
+
+                    if (product.tracking === 'serial' &&
+                        ((this.actionParams.model === 'stock.picking' &&
+                        lineInCurrentPage.qty_done > 0 && this.requireLotNumber
+                        ) ||
+                        (this.actionParams.model === 'stock.inventory' &&
+                        lineInCurrentPage.product_qty > 0
+                        ))) {
+                        continue;
+                    }
+                    // if (lineInCurrentPage.qty_done &&
+                    // (this.actionParams.model === 'stock.inventory' ||
+                    // lineInCurrentPage.location_dest_id.id === currentPage.location_dest_id) &&
+                    // this.scannedLines.indexOf(lineInCurrentPage.virtual_id || lineInCurrentPage.id) === -1 &&
+                    // lineInCurrentPage.qty_done >= lineInCurrentPage.product_uom_qty) {
+                    //     continue;
+                    // }
+                    if (lotId &&
+                        ((this.actionParams.model === 'stock.picking' &&
+                        lineInCurrentPage.lot_id &&
+                        lineInCurrentPage.lot_id[0] !== lotId
+                        ) ||
+                        (this.actionParams.model === 'stock.inventory' &&
+                        lineInCurrentPage.prod_lot_id &&
+                        lineInCurrentPage.prod_lot_id[0] !== lotId
+                        )
+                    )) {
+                        continue;
+                    }
+                    if (lotName &&
+                        lineInCurrentPage.lot_name &&
+                        lineInCurrentPage.lot_name !== lotName
+                        ) {
+                        continue;
+                    }
+                    if (packageId &&
+                        (! lineInCurrentPage.package_id ||
+                        lineInCurrentPage.package_id[0] !== packageId[0])
+                        ) {
+                        continue;
+                    }
+                    // if(lineInCurrentPage.product_uom_qty && lineInCurrentPage.qty_done >= lineInCurrentPage.product_uom_qty) {
+                    //     continue;
+                    // }
+                    res = lineInCurrentPage;
+                    break;
+                }
+            }
+            return res;
+        },
         /**
          * Main method called when a quantity needs to be incremented or a lot set on a line.
          * it calls `this._findCandidateLineToIncrement` first, if nothing is found it may use

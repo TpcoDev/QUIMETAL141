@@ -28,9 +28,18 @@ class as_barcode_quimetal(http.Controller):
             # result = biip.parse(barcode,separator_chars=('\x1d'))
             # lote = result.gs1_message.get(ai="10").value
             # product_code = result.gs1_message.get(ai="91").value
+            product_code = ''
+            product_gtin = ''
+            expiration_date = ''
             lote = result['10']
-            product_code = result['91']
-            product_id = request.env['product.product'].sudo().search([('default_code','=',product_code)],limit=1)
+            if '91' in result:
+                product_code = result['91']
+            if '01' in result:
+                product_gtin = result['01']
+            if '11' in result:
+                expiration_date = result['11']
+
+            product_id = request.env['product.product'].sudo().search(['|',('default_code','=',product_code),('barcode','=',product_gtin)],limit=1)
             if not product_id:
                 vals2={
                     'type':True,
@@ -47,7 +56,7 @@ class as_barcode_quimetal(http.Controller):
                         'type':True,
                         'lote': lote,
                         'barcode': barcode,
-                        'product': product_code,
+                        'product': product_code or product_gtin,
                         'result': json.dumps(result),
                         'existe': True,
                     }
@@ -58,7 +67,7 @@ class as_barcode_quimetal(http.Controller):
                             'type':True,
                             'lote': lote,
                             'barcode': barcode,
-                            'product': product_code,
+                            'product': product_code or product_gtin,
                             'result': json.dumps(result),
                             'existe': False,
                         }
@@ -66,13 +75,14 @@ class as_barcode_quimetal(http.Controller):
                         lot_id = request.env['stock.production.lot'].sudo().create({
                                 'product_id': product_id.id,
                                 'name': lote,
+                                'expiration_date': expiration_date,
                                 'company_id': request.env.user.company_id.id,
                             })
                         vals2={
                             'type':True,
                             'lote': lot_id.name,
                             'barcode': barcode,
-                            'product': product_code,
+                            'product': product_code or product_gtin,
                             'result': json.dumps(result),
                         }      
                         lot_id.message_post(body = barcode)     

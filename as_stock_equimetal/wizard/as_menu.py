@@ -127,6 +127,8 @@ class as_wizard_fromulas_stock(models.Model):
                         diccionario.append(contexto_lotes.operacion_id.id)                    
                 else:
                     move_id = self.env['stock.move.line'].search([('lot_id','=',contexto_lotes.lots_id.id)],order='date asc',limit=1)
+                    if not move_id:
+                        raise UserError("El producto no posee Stock")
                     file_like_object = BytesIO()
                     EAN = barcode.get_barcode_class('code128')
                     ean = EAN(move_id.as_barcode_mpp_1_CDB(), writer=ImageWriter())
@@ -150,6 +152,8 @@ class as_wizard_fromulas_stock(models.Model):
                         diccionario.append(contexto_lotes.operacion_id.id)                    
                 else:
                     move_id = self.env['stock.move.line'].search([('lot_id','=',contexto_lotes.lots_id.id)],order='date asc',limit=1)
+                    if not move_id:
+                        raise UserError("El producto no posee Stock")
                     file_like_object = BytesIO()
                     EAN = barcode.get_barcode_class('code128')
                     ean = EAN(move_id.as_barcode_pp_1_CDB(), writer=ImageWriter())
