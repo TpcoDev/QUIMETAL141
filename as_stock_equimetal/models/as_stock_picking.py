@@ -13,8 +13,11 @@ class StockMoveLine(models.Model):
 
     def _compute_purchase(self):
         for line in self:
-            picking = self.env['stock.picking'].search([('origin','=',line.origin),('state','!=','cancel'),('id','!=',line.id)],limit=1)
-            line.as_picking_o = picking
+            if line.id:
+                picking = self.env['stock.picking'].search([('origin','=',line.origin),('state','!=','cancel'),('id','!=',line.id)],limit=1)
+                line.as_picking_o = picking
+            else:
+                line.as_picking_o=False
 
     def _get_share_url(self, redirect=False, signup_partner=False, share_token=None):
         """

@@ -381,8 +381,8 @@ class as_webservice_quimetal(http.Controller):
                 uid = user_id
                 # request.session.logout()
                 estructura = self.get_file('ws023.json')
-                # es_valido = True
-                es_valido = self.validar_json(post, esquema=estructura)
+                es_valido = True
+                # es_valido = self.validar_json(post, esquema=estructura)
 
                 if es_valido:
                     vals_picking = {}
@@ -427,7 +427,7 @@ class as_webservice_quimetal(http.Controller):
                                     'picking_id': picking.id,
                                     'product_id': product_id,
                                     'product_uom': uom_id,
-                                    'product_uom_qty': cantidad,
+                                    # 'product_uom_qty': cantidad,
                                     # 'quantity_done': move['Quantity'],
                                     "company_id": request.env.user.company_id.id,
                                 })
@@ -437,16 +437,16 @@ class as_webservice_quimetal(http.Controller):
                                         'picking_id': move1.picking_id.id,
                                         'move_id': move1.id,
                                         'product_id': product_id,
-                                        'product_uom_qty': move_line['Quantity'],
+                                        'qty_done': move_line['Quantity'],
                                         'product_uom_id': uom_id,
                                         'location_id': move1.location_id.id,
                                         'location_dest_id': move1.location_dest_id.id,
                                         'lot_id': lot_id,
                                         "company_id": request.env.user.company_id.id,
                                     })
-                                picking.action_confirm()
-                                picking.action_assign()
-                                picking.scheduled_date= picking.date
+                            picking.action_confirm()
+                            picking.action_assign()
+                            picking.scheduled_date= picking.date
                             self.create_message_log("ws023",as_token,post,'ACEPTADO','OT recibidas correctamente')
                             return mensaje_correcto
                         else:
