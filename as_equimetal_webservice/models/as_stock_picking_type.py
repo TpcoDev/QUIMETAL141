@@ -36,3 +36,4 @@ class PickingType(models.Model):
         string="Webservice",
     )
     as_send_automatic = fields.Boolean(string='Enviar Correo al confirmar')
+    as_stock_fail = fields.Boolean(string='Es Ubicación de Rechazo de Productos')

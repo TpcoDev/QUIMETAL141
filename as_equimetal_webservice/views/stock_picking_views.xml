@@ -21,6 +21,7 @@
             <xpath expr="//field[@name='removal_strategy_id']" position="before">
                 <field name="as_webservice" />
                 <field name="as_send_automatic" />
+                <field name="as_stock_fail" />
 
             </xpath>
         </field>

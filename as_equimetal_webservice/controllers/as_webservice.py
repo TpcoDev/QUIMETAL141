@@ -466,6 +466,7 @@ class as_webservice_quimetal(http.Controller):
     def WS005(self, **post):
         post = yaml.load(request.httprequest.data)
         res_id =  post['res_id'] 
+        mode =  post['mode'] 
         res = {}
         as_token = uuid.uuid4().hex
         mensaje_error = {			
@@ -490,7 +491,7 @@ class as_webservice_quimetal(http.Controller):
                     sp_search = sp.sudo().search([('name', '=', res_id)])
                     if sp_search:
                         if not sp_search.as_enviado_sap:
-                            json_res = sp_search.as_assemble_picking_json('WS005')
+                            json_res = sp_search.as_assemble_picking_json_mode('WS005',mode)
                             if json_res != {}:
                                 headerVal = {
                                     'Authorization': 'Bearer '+str(auth_id)

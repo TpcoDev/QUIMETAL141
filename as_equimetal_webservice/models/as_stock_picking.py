@@ -102,6 +102,7 @@ class AsStockPicking(models.Model):
                     # headerVal = {'Authorization': token}
                     requestBody = {
                         'res_id': self.name,
+                        'mode': False,
                     }
                     credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
                     URL=credentials+address_webservice[webservice]
@@ -120,9 +121,44 @@ class AsStockPicking(models.Model):
                 else:
                     body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
             except Exception as e:
-                body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>"
-                
+                body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>" 
             self.message_post(body = body)
+            if webservice == 'WS005':
+                self.message_post(body = '<b style="color:blue;">Llamada a Producto Rechazados</b><br/>')
+                other_loc = False
+                for move_stock in self.move_line_ids_without_package:
+                    if move_stock.location_dest_id.as_stock_fail == True:
+                        other_loc = True
+                if other_loc:
+                    try:
+                        token = self.as_get_apikey(self.env.user.id)
+                        if token != None:
+                            headerVal = {}
+                            # headerVal = {'Authorization': token}
+                            requestBody = {
+                                'res_id': self.name,
+                                'mode': True,
+                            }
+                            credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                            URL=credentials+address_webservice[webservice]
+                            r = requests.post(URL, json=requestBody, headers=headerVal)
+                            if r.ok:
+                                text = r.text
+                                info = json.loads(text)
+                                if info['result']['RespCode'] == 0:
+                                    body =  "<b style='color:green'>EXITOSO ("+webservice+")!: </b><br>"
+                                    body += '<b>'+info['result']['RespMessage']+'</b>'                        
+                                else:
+                                    body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br>"
+                                    body += '<b>'+info['result']['RespMessage']+'</b>'
+                            else:
+                                body =  "<b style='color:red'>ERROR ("+webservice+")!:</b><br> <b> No aceptado por SAP</b><br>" 
+                        else:
+                            body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
+                    except Exception as e:
+                        body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>"
+                        
+                    self.message_post(body = body)
         
     def as_get_apikey(self,user_id):
         query = self.env.cr.execute("""select key from res_users_apikeys where user_id ="""+str(user_id)+"""""")
@@ -289,6 +325,74 @@ class AsStockPicking(models.Model):
                         "detalle": picking_line,
                     }
 
+            if cont_errores > 0:
+                self.message_post(body = errores)
+            self.message_post(body = vals_picking)
+        return vals_picking    
+    
+    def as_assemble_picking_json_mode(self,webservice,mode):
+        picking_line = []
+        vals_picking_line = {}
+        cont_errores = 0
+        for picking in self:
+            location_id = picking.location_id.name
+            location_dest_id = picking.location_dest_id.name
+            errores = '<b style="color:orange;">Errores de formulario:</b><br/>'
+            for move_stock in picking.move_ids_without_package:
+                location_id = move_stock.location_id.name
+                location_dest_id = move_stock.location_dest_id.name
+                move = []
+                vals_move_line = {}
+                for move_line in move_stock.move_line_ids:
+                    if move_line.location_dest_id.as_stock_fail == mode:
+                        if not move_line.lot_id:
+                            errores+= '<b>* Producto No posee Lote</b><br/>'
+                            cont_errores +=1
+                        vals_move_line.update({
+                            "distNumber": move_line.lot_id.name,
+                            "quantity": move_line.qty_done,
+                            "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                            "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                        })
+                        move.append(vals_move_line)
+                if move != []:
+                    if not move_stock.product_id.default_code:
+                        errores+= '<b>* Producto No posee Referencia interna</b><br/>'
+                        cont_errores +=1
+                    vals_picking_line.update({
+                        "itemCode": move_stock.product_id.default_code,
+                        "itemDescription": move_stock.product_id.name,
+                        "quantity": move_stock.quantity_done,
+                        "measureUnit": move_stock.product_uom.name,
+                        "lote": move,
+                    })
+                    picking_line.append(vals_picking_line)
+            if webservice == 'WS005':
+                try:
+                    int(picking.origin)
+                except Exception as e:
+                    errores+= '<b>* El origen-docNumSAP no puede tener letras solo Numeros</b><br/>'
+                    cont_errores +=1
+                if not picking.partner_id:
+                    errores+= '<b>* Cliente No seleccionado</b><br/>'
+                    cont_errores +=1
+                if not picking.origin:
+                    errores+= '<b>* Campo Origen No completado</b><br/>'
+                    cont_errores +=1
+                if not picking.date_done:
+                    errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
+                    cont_errores +=1
+                if cont_errores <=0:
+                    vals_picking = {
+                        "docNum": str(picking.name),
+                        "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
+                        "docNumSAP": int(picking.origin),
+                        "warehouseCodeOrigin": picking.location_id.name,
+                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "cardCode": picking.partner_id.vat,
+                        "cardName": picking.partner_id.name,
+                        "detalle": picking_line,
+                    }
             if cont_errores > 0:
                 self.message_post(body = errores)
             self.message_post(body = vals_picking)
