@@ -280,12 +280,12 @@ class AsStockPicking(models.Model):
                 if not picking.partner_id:
                     errores+= '<b>* Cliente No seleccionado</b><br/>'
                     cont_errores +=1
-                if not picking.as_num_factura:
-                    errores+= '<b>* Numero de Factura no completado</b><br/>'
-                    cont_errores +=1
-                if not picking.as_guia_sap:
-                    errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
-                    cont_errores +=1
+                # if not picking.as_num_factura:
+                #     errores+= '<b>* Numero de Factura no completado</b><br/>'
+                #     cont_errores +=1
+                # if not picking.as_guia_sap:
+                #     errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
+                #     cont_errores +=1
                 if not picking.origin:
                     errores+= '<b>* Origen de movimiento no completado</b><br/>'
                     cont_errores +=1
@@ -306,12 +306,12 @@ class AsStockPicking(models.Model):
                         "detalle": picking_line,
                     }
             elif webservice in ('WS021'):
-                if not picking.as_num_factura:
-                    errores+= '<b>* Numero de Factura no completado</b><br/>'
-                    cont_errores +=1
-                if not picking.as_guia_sap:
-                    errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
-                    cont_errores +=1
+                # if not picking.as_num_factura:
+                #     errores+= '<b>* Numero de Factura no completado</b><br/>'
+                #     cont_errores +=1
+                # if not picking.as_guia_sap:
+                #     errores+= '<b>* Numero de guia de despacho no completado</b><br/>'
+                #     cont_errores +=1
                 if not picking.date_done:
                     errores+= '<b>* Campo Fecha Confirmacion No completado</b><br/>'
                     cont_errores +=1
