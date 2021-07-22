@@ -381,8 +381,8 @@ class as_webservice_quimetal(http.Controller):
                 uid = user_id
                 # request.session.logout()
                 estructura = self.get_file('ws023.json')
-                es_valido = True
-                # es_valido = self.validar_json(post, esquema=estructura)
+                # es_valido = True
+                es_valido = self.validar_json(post, esquema=estructura)
 
                 if es_valido:
                     vals_picking = {}
@@ -431,6 +431,7 @@ class as_webservice_quimetal(http.Controller):
                                     # 'quantity_done': move['Quantity'],
                                     "company_id": request.env.user.company_id.id,
                                 })
+                                move1.move_line_ids.unlink()
                                 for move_line in move['Detalle']:
                                     lot_id = self.as_get_lot_id('stock.production.lot',move_line,product_id)
                                     move_line1 =request.env['stock.move.line'].sudo().create({
@@ -444,8 +445,9 @@ class as_webservice_quimetal(http.Controller):
                                         'lot_id': lot_id,
                                         "company_id": request.env.user.company_id.id,
                                     })
-                            picking.action_confirm()
-                            picking.action_assign()
+                            picking.state="assigned"
+                            # picking.action_confirm()
+                            # picking.action_assign()
                             picking.scheduled_date= picking.date
                             self.create_message_log("ws023",as_token,post,'ACEPTADO','OT recibidas correctamente')
                             return mensaje_correcto

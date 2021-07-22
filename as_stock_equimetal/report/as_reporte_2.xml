@@ -62,7 +62,7 @@
 
                             </tr>
                             <tr>
-                                <td>Producto2:</td>
+                                <td>Producto:</td>
                                 <td><span t-esc="o.product_id.default_code" /></td>
                             </tr>
                             <tr>

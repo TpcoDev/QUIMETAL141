@@ -184,23 +184,23 @@ class AsStockPicking(models.Model):
                     if not move_line.lot_id:
                         errores+= '<b>* Producto No posee Lote</b><br/>'
                         cont_errores +=1
-                    vals_move_line.update({
+                    vals_move_line = {
                         "distNumber": move_line.lot_id.name,
                         "quantity": move_line.qty_done,
                         "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
                         "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
-                    })
+                    }
                     move.append(vals_move_line)
                 if not move_stock.product_id.default_code:
                     errores+= '<b>* Producto No posee Referencia interna</b><br/>'
                     cont_errores +=1
-                vals_picking_line.update({
+                vals_picking_line = {
                     "itemCode": move_stock.product_id.default_code,
                     "itemDescription": move_stock.product_id.name,
                     "quantity": move_stock.quantity_done,
                     "measureUnit": move_stock.product_uom.name,
                     "lote": move,
-                })
+                }
                 picking_line.append(vals_picking_line)
             if webservice == 'WS005':
                 try:
@@ -300,8 +300,8 @@ class AsStockPicking(models.Model):
                         "warehouseCodeDestination": picking.location_dest_id.name,
                         "cardCode": picking.partner_id.vat,
                         "cardName": picking.partner_id.name,
-                        "numFactura": str(picking.as_num_factura),
-                        "numGuiaDesp": str(picking.as_guia_sap),
+                        "numFactura": str(picking.as_num_factura or ''),
+                        "numGuiaDesp": str(picking.as_guia_sap or ''),
                         "numOVAsoc": picking.origin,
                         "detalle": picking_line,
                     }
@@ -320,8 +320,8 @@ class AsStockPicking(models.Model):
                         "docNum": str(picking.name),
                         "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
                         "warehouseCodeDestination": picking.location_dest_id.name,
-                        "numFactura": str(picking.as_num_factura),
-                        "numGuiaDesp": str(picking.as_guia_sap),
+                        "numFactura": str(picking.as_num_factura or ''),
+                        "numGuiaDesp": str(picking.as_guia_sap or ''),
                         "detalle": picking_line,
                     }
 
@@ -339,33 +339,33 @@ class AsStockPicking(models.Model):
             location_dest_id = picking.location_dest_id.name
             errores = '<b style="color:orange;">Errores de formulario:</b><br/>'
             for move_stock in picking.move_ids_without_package:
-                location_id = move_stock.location_id.name
-                location_dest_id = move_stock.location_dest_id.name
                 move = []
                 vals_move_line = {}
                 for move_line in move_stock.move_line_ids:
                     if move_line.location_dest_id.as_stock_fail == mode:
+                        location_id = move_line.location_id.name
+                        location_dest_id = move_line.location_dest_id.name
                         if not move_line.lot_id:
                             errores+= '<b>* Producto No posee Lote</b><br/>'
                             cont_errores +=1
-                        vals_move_line.update({
+                        vals_move_line = {
                             "distNumber": move_line.lot_id.name,
                             "quantity": move_line.qty_done,
                             "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
                             "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
-                        })
+                        }
                         move.append(vals_move_line)
                 if move != []:
                     if not move_stock.product_id.default_code:
                         errores+= '<b>* Producto No posee Referencia interna</b><br/>'
                         cont_errores +=1
-                    vals_picking_line.update({
+                    vals_picking_line = {
                         "itemCode": move_stock.product_id.default_code,
                         "itemDescription": move_stock.product_id.name,
                         "quantity": move_stock.quantity_done,
                         "measureUnit": move_stock.product_uom.name,
                         "lote": move,
-                    })
+                    }
                     picking_line.append(vals_picking_line)
             if webservice == 'WS005':
                 try:
@@ -387,8 +387,8 @@ class AsStockPicking(models.Model):
                         "docNum": str(picking.name),
                         "docDate": str(picking.date_done.strftime('%Y-%m-%dT%H:%M:%S') or None),
                         "docNumSAP": int(picking.origin),
-                        "warehouseCodeOrigin": picking.location_id.name,
-                        "warehouseCodeDestination": picking.location_dest_id.name,
+                        "warehouseCodeOrigin": location_id,
+                        "warehouseCodeDestination": location_dest_id,
                         "cardCode": picking.partner_id.vat,
                         "cardName": picking.partner_id.name,
                         "detalle": picking_line,
