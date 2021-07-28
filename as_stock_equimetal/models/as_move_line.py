@@ -28,19 +28,22 @@ class StockMoveLine(models.Model):
     def as_fecha_vencimiento(self):
         fecha_vencimiento = ''
         for line in self:
-            if line.expiration_date:
-                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
-            if not line.expiration_date and line.lot_id.expiration_date:
+            # if line.expiration_date:
+            #     fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
+            # if not line.expiration_date and line.lot_id.expiration_date:
+            if line.lot_id.expiration_date:
                 fecha_vencimiento = (line.lot_id.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
         return fecha_vencimiento
 
     def as_fecha_vencimientostr(self):
         fecha_vencimiento = ''
         for line in self:
-            if line.expiration_date:
-                fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y-%m-%d')
-            if not line.expiration_date and line.lot_id.expiration_date:
-                fecha_vencimiento = (line.lot_id.expiration_date-timedelta(hours=4)).strftime('%y-%m-%d')
+            # if line.expiration_date:
+            #     fecha_vencimiento = (line.expiration_date-timedelta(hours=4)).strftime('%y-%m-%d')
+            # if not line.expiration_date and line.lot_id.expiration_date:
+            #     fecha_vencimiento = (line.lot_id.expiration_date-timedelta(hours=4)).strftime('%y-%m-%d')
+            if line.lot_id.expiration_date:
+                fecha_vencimiento = (line.lot_id.expiration_date-timedelta(hours=4)).strftime('%y%m%d')
 
         return fecha_vencimiento
 

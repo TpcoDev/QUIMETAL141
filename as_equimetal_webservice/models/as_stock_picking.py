@@ -188,7 +188,7 @@ class AsStockPicking(models.Model):
                         "distNumber": move_line.lot_id.name,
                         "quantity": move_line.qty_done,
                         "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
-                        "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                        "dateExpiration":  str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S')),
                     }
                     move.append(vals_move_line)
                 if not move_stock.product_id.default_code:
@@ -352,7 +352,7 @@ class AsStockPicking(models.Model):
                             "distNumber": move_line.lot_id.name,
                             "quantity": move_line.qty_done,
                             "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
-                            "dateExpiration":  str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
+                            "dateExpiration":  str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S')),
                         }
                         move.append(vals_move_line)
                 if move != []:

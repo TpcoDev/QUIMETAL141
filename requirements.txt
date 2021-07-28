@@ -3,3 +3,4 @@ tabulate
 pdf417gen
 biip
 python-barcode
+jsonschema
