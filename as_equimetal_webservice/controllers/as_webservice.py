@@ -406,6 +406,9 @@ class as_webservice_quimetal(http.Controller):
                                     'origin': post['params']['DocNum'],
                                     'picking_type_id': picking_type_id.id,
                                     "company_id": request.env.user.company_id.id,
+                                    'immediate_transfer': True,
+                                    'l10n_cl_draft_status': False,
+                                    'state': 'assigned',
                                 })
                                 # move from shelf1
                             for move in post['params']['DatosProdOC']:
@@ -431,7 +434,7 @@ class as_webservice_quimetal(http.Controller):
                                     # 'quantity_done': move['Quantity'],
                                     "company_id": request.env.user.company_id.id,
                                 })
-                                move1.move_line_ids.unlink()
+                                # move1.move_line_ids.unlink()
                                 for move_line in move['Detalle']:
                                     lot_id = self.as_get_lot_id('stock.production.lot',move_line,product_id)
                                     move_line1 =request.env['stock.move.line'].sudo().create({
@@ -444,6 +447,8 @@ class as_webservice_quimetal(http.Controller):
                                         'location_dest_id': move1.location_dest_id.id,
                                         'lot_id': lot_id,
                                         "company_id": request.env.user.company_id.id,
+                                        'state': 'assigned',
+                                        'location_processed': False,
                                     })
                             picking.state="assigned"
                             # picking.action_confirm()
