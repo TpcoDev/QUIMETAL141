@@ -224,7 +224,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                         line.product_qty += 0;
                     }
                 }
-            } else if (this._isAbleToCreateNewLine()) {
+            } else if (this._isAbleToCreateNewLine() && this.currentState.picking_type_id[0]==18) {
                 isNewLine = true;
                 // Create a line with the processed quantity.
                 if (params.product.tracking === 'none' ||
@@ -297,7 +297,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                 // alert(debug_gs1)
             }
             var create_lot = false
-            if (self.currentState.picking_type_id[1] != "Maipú: Transferencias  a Despacho"){
+            if (self.currentState.picking_type_id[0] != 18){
                 create_lot = true
             }
             // barcode = '104443391MPQUI01117210308';
@@ -356,7 +356,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                     self.do_warn(false, _t('PRODUCTO NO ESTA EN EL SISTEMA, DEBE CREARLO'));
                     return Promise.resolve();
                 }
-                if (self.currentState.picking_type_id[1] != "Maipú: Transferencias  a Despacho"){
+                if (self.currentState.picking_type_id[0] != 18){
                     if (!existe_order && !resultado.existe) {
                         self.do_warn(false, _t('PRODUCTO-LOTE NO ESTA EN EL SISTEMA'));
                         return Promise.resolve();

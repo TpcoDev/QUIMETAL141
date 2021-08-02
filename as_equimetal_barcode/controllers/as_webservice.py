@@ -38,6 +38,9 @@ class as_barcode_quimetal(http.Controller):
                 product_gtin = result['01']
             if '11' in result:
                 expiration_date = result['11']
+            if '17' in result:
+                expiration_date = result['17']
+
 
             product_id = request.env['product.product'].sudo().search(['|',('default_code','=',product_code),('barcode','=',product_gtin)],limit=1)
             if not product_id:

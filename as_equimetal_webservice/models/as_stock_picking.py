@@ -58,7 +58,7 @@ class AsStockPicking(models.Model):
     def as_send_email(self):
         ''' Opens a wizard to compose an email, with relevant mail template loaded by default '''
         self.ensure_one()
-        template_id = self._find_mail_template()
+        template_id = self._find_mail_template_send()
         lang = self.env.context.get('lang')
         template = self.env['mail.template'].browse(template_id)
         if template.lang:
@@ -85,6 +85,15 @@ class AsStockPicking(models.Model):
         wiz = Form(self.env['mail.compose.message'].with_context(ctx)).save()
         wiz.action_send_mail()
         self.message_post(body = "<b style='color:green;'>Enviado correo</b>")
+
+
+    def _find_mail_template_send(self, force_confirmation_template=False):
+        if self.location_id.as_plantilla == '1':
+            template_id = self.env['ir.model.data'].xmlid_to_res_id('as_stock_equimetal.stock_picking_mail_templateD', raise_if_not_found=False)
+        else:
+            template_id = self.env['ir.model.data'].xmlid_to_res_id('as_stock_equimetal.stock_picking_mail_templateO', raise_if_not_found=False)
+
+        return template_id
 
     def action_picking_sap(self):
         if self.as_webservice:
