@@ -31,13 +31,14 @@ class as_barcode_quimetal(http.Controller):
             product_code = ''
             product_gtin = ''
             expiration_date = ''
+            create_date = ''
             lote = result['10']
             if '91' in result:
                 product_code = result['91']
             if '01' in result:
                 product_gtin = result['01']
             if '11' in result:
-                expiration_date = result['11']
+                create_date = result['11']
             if '17' in result:
                 expiration_date = result['17']
 
@@ -78,9 +79,13 @@ class as_barcode_quimetal(http.Controller):
                         lot_id = request.env['stock.production.lot'].sudo().create({
                                 'product_id': product_id.id,
                                 'name': lote,
-                                'expiration_date': expiration_date+' 04:00',
                                 'company_id': request.env.user.company_id.id,
                             })
+                        if create_date:
+                            request.env.cr.execute("UPDATE stock_production_lot SET create_date = %s WHERE id = %s", (create_date+' 04:00',lot_id.id))
+                        if expiration_date:
+                            lot_id.expiration_date = expiration_date+' 04:00'
+
                         vals2={
                             'type':True,
                             'lote': lot_id.name,
