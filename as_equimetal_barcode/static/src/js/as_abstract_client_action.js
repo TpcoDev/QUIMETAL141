@@ -290,6 +290,7 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             var resultado = {}
             var self = this;
             var existe_order = true
+            var existe_page = true
             self.requireLotNumber = true;
             var debug_gs1 = urlParam2('debug_gs1');
             if (debug_gs1) {
@@ -344,6 +345,17 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             if (lines_with_lot<=0) {
                 existe_order = false
             }
+            // existe en la page
+            if(this.pages.length > 1){
+                var currentPage = this.pages[this.currentPageIndex]
+                var lines_page_lot = _.filter(self.currentState.move_line_ids, function (line) {
+                    return (line.lot_id && line.lot_id[1] === barcode && line.location_dest_id['id'] == currentPage.location_dest_id) || (line.lot_name === barcode && line.location_dest_id['id'] == currentPage.location_dest_id);
+                });
+                if (lines_page_lot<=0) {
+                    existe_page = false
+                }
+
+            }
 
             
 
@@ -365,6 +377,11 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                         self.do_warn(false, _t('PRODUCTO-LOTE NO ESTA EN LA ORDEN'));
                         return Promise.resolve();
                     }
+                    
+                }
+                if (!existe_page) {
+                    self.do_warn(false, _t('PRODUCTO-LOTE NO EN ESTA PAGINA, CLICK EN SIGUIENTE O ANTERIOR'));
+                    return Promise.resolve();
                 }
                 var commandeHandler = self.commands[barcode];
                 if (commandeHandler) {

@@ -71,7 +71,7 @@
                                 <td>Peso neto:</td>
                                 <td>
                                 <t t-if="o.as_get_peso_neto()">
-                                <span t-esc="int(o.as_get_peso_neto())" /> KG
+                                <span t-esc="int(o.as_get_peso_neto())" />  <span t-esc="o.lot_id.product_uom_id.name" />
                                 </t>
                                 </td>
                             </tr>

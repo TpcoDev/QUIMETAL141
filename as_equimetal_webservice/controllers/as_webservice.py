@@ -71,7 +71,7 @@ class as_webservice_quimetal(http.Controller):
                     w_search = request.env["purchase.order"].sudo().search([('name', '=', post['DocNum'])],limit=1)
                     if not w_search:
                         cliente = request.env['res.partner']
-                        cliente_search = cliente.sudo().search([('name', '=', post['CardName'])],limit=1)
+                        cliente_search = cliente.sudo().search([('vat', '=', post['CardCode'])],limit=1)
                         if cliente_search.id:
                             cliente_id = cliente_search.id
                         else:
@@ -218,7 +218,7 @@ class as_webservice_quimetal(http.Controller):
                     if not w_search:
                         # Tratamiento de cliente
                         cliente = request.env['res.partner']
-                        cliente_search = cliente.sudo().search([('name', '=', post['CardName'])],limit=1)
+                        cliente_search = cliente.sudo().search([('vat', '=', post['CardCode'])],limit=1)
                         if cliente_search.id:
                             cliente_id = cliente_search.id
                         else:
