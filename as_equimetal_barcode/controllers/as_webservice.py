@@ -37,6 +37,8 @@ class as_barcode_quimetal(http.Controller):
                 product_code = result['91']
             if '01' in result:
                 product_gtin = result['01']
+            if '02' in result:
+                product_gtin = result['02']
             if '11' in result:
                 create_date = result['11']
             if '17' in result:
@@ -50,19 +52,23 @@ class as_barcode_quimetal(http.Controller):
                     'lote': lote,
                     'barcode': barcode,
                     'product': False,
+                    'gtin': False,
                     'result': json.dumps(result),
                     'existe': True,
+                    'product_type': product_id.as_type_product,
                 }
             else:
-                lot_id = request.env['stock.production.lot'].sudo().search([('name','=',lote)],limit=1)
+                lot_id = request.env['stock.production.lot'].sudo().search([('name','=',lote),('product_id','=',product_id.id)],limit=1)
                 if lot_id:
                     vals2={
                         'type':True,
                         'lote': lote,
                         'barcode': barcode,
                         'product': product_code or product_gtin,
+                        'gtin': product_id.barcode,
                         'result': json.dumps(result),
                         'existe': True,
+                        'product_type': product_id.as_type_product,
                     }
                     lot_id.message_post(body = barcode)
                 else:
@@ -72,8 +78,10 @@ class as_barcode_quimetal(http.Controller):
                             'lote': lote,
                             'barcode': barcode,
                             'product': product_code or product_gtin,
+                            'gtin': product_id.barcode,
                             'result': json.dumps(result),
                             'existe': False,
+                            'product_type': product_id.as_type_product,
                         }
                     else:
                         lot_id = request.env['stock.production.lot'].sudo().create({
@@ -91,7 +99,9 @@ class as_barcode_quimetal(http.Controller):
                             'lote': lot_id.name,
                             'barcode': barcode,
                             'product': product_code or product_gtin,
+                            'gtin': product_id.barcode,
                             'result': json.dumps(result),
+                            'product_type': product_id.as_type_product,
                         }      
                         lot_id.message_post(body = barcode)     
         except Exception as e:

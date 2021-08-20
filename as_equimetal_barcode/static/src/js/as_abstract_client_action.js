@@ -289,9 +289,13 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
         _onBarcodeScannedHandler: function (barcode) {
             var resultado = {}
             var self = this;
+            this.barcode_producto = '';
             var existe_order = true
             var existe_page = true
             self.requireLotNumber = true;
+            localStorage.setItem("as_product_type", "");
+            localStorage.setItem("as_product_barcode", "");
+            // localStorage.setItem("as_product_code", "");
             var debug_gs1 = urlParam2('debug_gs1');
             if (debug_gs1) {
                 barcode = debug_gs1;
@@ -339,8 +343,15 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                 $('#barman').val("");
             }
             
+            // this.barcode_producto = resultado.product
+            
+            localStorage.setItem("as_product_type", resultado.product_type);
+            localStorage.setItem("as_product_barcode", resultado.gtin);
+            // localStorage.setItem("as_product_code", resultado.code);
+
+            var as_barcode = localStorage.getItem("as_product_barcode");
             var lines_with_lot = _.filter(self.currentState.move_line_ids, function (line) {
-                return (line.lot_id && line.lot_id[1] === barcode) || line.lot_name === barcode;
+                return ((line.lot_id && line.lot_id[1] === barcode) || line.lot_name === barcode) && line.product_id.barcode == as_barcode;
             });
             if (lines_with_lot<=0) {
                 existe_order = false
@@ -349,15 +360,13 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
             if(this.pages.length > 1){
                 var currentPage = this.pages[this.currentPageIndex]
                 var lines_page_lot = _.filter(self.currentState.move_line_ids, function (line) {
-                    return (line.lot_id && line.lot_id[1] === barcode && line.location_dest_id['id'] == currentPage.location_dest_id) || (line.lot_name === barcode && line.location_dest_id['id'] == currentPage.location_dest_id);
+                    return ((line.lot_id && line.lot_id[1] === barcode && line.location_dest_id['id'] == currentPage.location_dest_id) || (line.lot_name === barcode && line.location_dest_id['id'] == currentPage.location_dest_id)) && line.product_id.barcode == as_barcode;
                 });
                 if (lines_page_lot<=0) {
                     existe_page = false
                 }
 
             }
-
-            
 
             this.mutex.exec(function () {
                 if (self.mode === 'done' || self.mode === 'cancel') {
@@ -612,9 +621,14 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
 
             var searchRead = function (barcode) {
                 // Check before if it exists reservation with the lot.
-                var lines_with_lot = _.filter(self.currentState.move_line_ids, function (line) {
-                    return (line.lot_id && line.lot_id[1] === barcode) || line.lot_name === barcode;
-                });
+
+                var as_tipo = localStorage.getItem("as_product_type");
+                var as_barcode = localStorage.getItem("as_product_barcode");
+                // var as_code = localStorage.getItem("as_product_code");
+                    var lines_with_lot = _.filter(self.currentState.move_line_ids, function (line) {
+                        return ((line.lot_id && line.lot_id[1] === barcode) || line.lot_name === barcode) && line.product_id.barcode == as_barcode;
+                    });
+            
                 var line_with_lot;
                 if (lines_with_lot.length > 0) {
                     lines_with_lot[0].id
@@ -644,9 +658,10 @@ odoo.define('as_equimetal_barcode.as_ClientAction', function (require) {
                         model: 'stock.production.lot',
                         method: 'search_read',
                         domain: [
-                            ['name', '=', barcode]
+                            ['name', '=', barcode],['product_id.barcode','=',as_barcode]
                         ],
                     });
+            
                 }
                 return def.then(function (res) {
                     if (!res.length) {
