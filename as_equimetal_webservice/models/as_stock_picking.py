@@ -104,40 +104,43 @@ class AsStockPicking(models.Model):
             else:
                 webservice = self.location_id.as_webservice
         if webservice:
-            try:
-                token = self.as_get_apikey(self.env.user.id)
-                if token != None:
-                    headerVal = {}
-                    # headerVal = {'Authorization': token}
-                    requestBody = {
-                        'res_id': self.name,
-                        'mode': False,
-                    }
-                    credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-                    URL=credentials+address_webservice[webservice]
-                    r = requests.post(URL, json=requestBody, headers=headerVal)
-                    if r.ok:
-                        text = r.text
-                        info = json.loads(text)
-                        if info['result']['RespCode'] == 0:
-                            body =  "<b style='color:green'>EXITOSO ("+webservice+")!: </b><br>"
-                            body += '<b>'+info['result']['RespMessage']+'</b>'                        
+            if webservice != 'WS005':
+                try:
+                    token = self.as_get_apikey(self.env.user.id)
+                    if token != None:
+                        headerVal = {}
+                        # headerVal = {'Authorization': token}
+                        requestBody = {
+                            'res_id': self.name,
+                            'mode': False,
+                        }
+                        credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                        URL=credentials+address_webservice[webservice]
+                        r = requests.post(URL, json=requestBody, headers=headerVal)
+                        if r.ok:
+                            text = r.text
+                            info = json.loads(text)
+                            if info['result']['RespCode'] == 0:
+                                body =  "<b style='color:green'>EXITOSO ("+webservice+")!: </b><br>"
+                                body += '<b>'+info['result']['RespMessage']+'</b>'                        
+                            else:
+                                body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br>"
+                                body += '<b>'+info['result']['RespMessage']+'</b>'
                         else:
-                            body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br>"
-                            body += '<b>'+info['result']['RespMessage']+'</b>'
+                            body =  "<b style='color:red'>ERROR ("+webservice+")!:</b><br> <b> No aceptado por SAP</b><br>" 
                     else:
-                        body =  "<b style='color:red'>ERROR ("+webservice+")!:</b><br> <b> No aceptado por SAP</b><br>" 
-                else:
-                    body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
-            except Exception as e:
-                body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>" 
-            self.message_post(body = body)
+                        body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
+                except Exception as e:
+                    body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>" 
+                self.message_post(body = body)
             if webservice == 'WS005':
-                self.message_post(body = '<b style="color:blue;">Llamada a Producto Rechazados</b><br/>')
                 other_loc = False
+                other_loc_aprobe = False
                 for move_stock in self.move_line_ids_without_package:
                     if move_stock.location_dest_id.as_stock_fail == True:
-                        other_loc = True
+                        other_loc = True                    
+                    if move_stock.location_dest_id.as_stock_fail == False:
+                        other_loc_aprobe = True
                 if other_loc:
                     try:
                         token = self.as_get_apikey(self.env.user.id)
@@ -168,7 +171,37 @@ class AsStockPicking(models.Model):
                         body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>"
                         
                     self.message_post(body = body)
-        
+                    self.message_post(body = '<b style="color:blue;">Llamada a Producto Rechazados</b><br/>')
+                if other_loc_aprobe:
+                    try:
+                        token = self.as_get_apikey(self.env.user.id)
+                        if token != None:
+                            headerVal = {}
+                            # headerVal = {'Authorization': token}
+                            requestBody = {
+                                'res_id': self.name,
+                                'mode': False,
+                            }
+                            credentials = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                            URL=credentials+address_webservice[webservice]
+                            r = requests.post(URL, json=requestBody, headers=headerVal)
+                            if r.ok:
+                                text = r.text
+                                info = json.loads(text)
+                                if info['result']['RespCode'] == 0:
+                                    body =  "<b style='color:green'>EXITOSO ("+webservice+")!: </b><br>"
+                                    body += '<b>'+info['result']['RespMessage']+'</b>'                        
+                                else:
+                                    body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br>"
+                                    body += '<b>'+info['result']['RespMessage']+'</b>'
+                            else:
+                                body =  "<b style='color:red'>ERROR ("+webservice+")!:</b><br> <b> No aceptado por SAP</b><br>" 
+                        else:
+                            body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><br> <b>El Token no encontrado!</b>"
+                    except Exception as e:
+                        body =  "<b style='color:red'>ERROR ("+webservice+")!: </b><b>"+ str(e)+"</b><br>" 
+                    self.message_post(body = body)
+                    self.message_post(body = '<b style="color:blue;">Llamada a Producto Acaptados</b><br/>')
     def as_get_apikey(self,user_id):
         query = self.env.cr.execute("""select key from res_users_apikeys where user_id ="""+str(user_id)+"""""")
         result = self.env.cr.fetchall()
@@ -197,8 +230,9 @@ class AsStockPicking(models.Model):
                         "distNumber": move_line.lot_id.name,
                         "quantity": move_line.qty_done,
                         "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
-                        "dateExpiration":  str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S')),
                     }
+                    if move_line.lot_id.expiration_date:
+                        vals_move_line['dateExpiration'] = str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S'))
                     move.append(vals_move_line)
                 if not move_stock.product_id.default_code:
                     errores+= '<b>* Producto No posee Referencia interna</b><br/>'
@@ -350,6 +384,7 @@ class AsStockPicking(models.Model):
             for move_stock in picking.move_ids_without_package:
                 move = []
                 vals_move_line = {}
+                as_total = 0.0
                 for move_line in move_stock.move_line_ids:
                     if move_line.location_dest_id.as_stock_fail == mode:
                         location_id = move_line.location_id.name
@@ -363,6 +398,7 @@ class AsStockPicking(models.Model):
                             "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
                             "dateExpiration":  str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S')),
                         }
+                        as_total += move_line.qty_done
                         move.append(vals_move_line)
                 if move != []:
                     if not move_stock.product_id.default_code:
@@ -371,7 +407,7 @@ class AsStockPicking(models.Model):
                     vals_picking_line = {
                         "itemCode": move_stock.product_id.default_code,
                         "itemDescription": move_stock.product_id.name,
-                        "quantity": move_stock.quantity_done,
+                        "quantity": as_total,
                         "measureUnit": move_stock.product_uom.name,
                         "lote": move,
                     }
