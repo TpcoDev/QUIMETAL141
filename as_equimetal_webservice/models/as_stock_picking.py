@@ -396,8 +396,9 @@ class AsStockPicking(models.Model):
                             "distNumber": move_line.lot_id.name,
                             "quantity": move_line.qty_done,
                             "dateProduction": str(move_line.lot_id.create_date.strftime('%Y-%m-%dT%H:%M:%S')),
-                            "dateExpiration":  str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S')),
                         }
+                        if move_line.lot_id.expiration_date:
+                            vals_move_line['dateExpiration'] = str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S'))
                         as_total += move_line.qty_done
                         move.append(vals_move_line)
                 if move != []:
