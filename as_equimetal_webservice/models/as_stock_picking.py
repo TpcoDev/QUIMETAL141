@@ -233,6 +233,8 @@ class AsStockPicking(models.Model):
                     }
                     if move_line.lot_id.expiration_date:
                         vals_move_line['dateExpiration'] = str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S'))
+                    else:
+                        vals_move_line['dateExpiration'] = ''
                     move.append(vals_move_line)
                 if not move_stock.product_id.default_code:
                     errores+= '<b>* Producto No posee Referencia interna</b><br/>'
@@ -399,6 +401,8 @@ class AsStockPicking(models.Model):
                         }
                         if move_line.lot_id.expiration_date:
                             vals_move_line['dateExpiration'] = str(move_line.lot_id.expiration_date.strftime('%Y-%m-%dT%H:%M:%S'))
+                        else:
+                            vals_move_line['dateExpiration'] = ''
                         as_total += move_line.qty_done
                         move.append(vals_move_line)
                 if move != []:
