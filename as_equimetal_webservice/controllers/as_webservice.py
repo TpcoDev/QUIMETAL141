@@ -884,7 +884,7 @@ class as_webservice_quimetal(http.Controller):
         return rw_id
 
     def as_get_lot_id(self,model,value,product_id):
-        rw = request.env[model].sudo().search([('name','=',value['DistNumber'])])
+        rw = request.env[model].sudo().search([('name','=',value['DistNumber']),('product_id','=',product_id)],limit=1)
         rw_id = 0
         if rw:
             rw_id = rw.id
