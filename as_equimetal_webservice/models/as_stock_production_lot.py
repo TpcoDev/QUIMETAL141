@@ -18,7 +18,8 @@ class as_stock_production_lot(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         res = super(as_stock_production_lot, self).create(vals_list)
-        res.name = str(res.name).upper()
+        for lot in res:
+            lot.name = str(lot.name).upper()
         return res
 
     @api.depends('name')
