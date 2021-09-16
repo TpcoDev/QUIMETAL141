@@ -37,7 +37,7 @@ class as_stock_move_line(models.Model):
 
     @api.onchange('product_id', 'product_uom_id')
     def _onchange_product_id(self):
-        as_vencimiento = self.self.expiration_date
+        as_vencimiento = self.expiration_date
         res = super(as_stock_move_line, self)._onchange_product_id()
         self.expiration_date = as_vencimiento
         return res
