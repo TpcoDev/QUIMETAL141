@@ -22,10 +22,10 @@ class as_stock_production_lot(models.Model):
             lot.name = str(lot.name).upper()
         return res
 
-    # @api.depends('name')
-    # def as_get_name(self):
-    #     for lot in self:
-    #         lot.name  = str(lot.name).upper()
+    @api.onchange('name')
+    def as_get_name_upper(self):
+        for lot in self:
+            lot.name  = str(lot.name).upper()
 
 class as_stock_move_line(models.Model):
     _inherit = "stock.move.line"
@@ -33,7 +33,8 @@ class as_stock_move_line(models.Model):
     @api.onchange('lot_name')
     def as_name_lot(self):
         for line in self:
-            line.lot_name = str(line.lot_name).upper()
+            if line.lot_name:
+                line.lot_name = str(line.lot_name).upper()
 
     @api.onchange('product_id', 'product_uom_id')
     def _onchange_product_id(self):
