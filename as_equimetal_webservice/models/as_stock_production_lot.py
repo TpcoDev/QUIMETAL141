@@ -43,3 +43,26 @@ class as_stock_move_line(models.Model):
         self.expiration_date = as_vencimiento
         return res
 
+    @api.onchange('lot_id')
+    def _onchange_lot_id(self):
+        if not self.picking_type_use_existing_lots or not self.product_id.use_expiration_date:
+            return
+        if self.lot_id:
+            self.expiration_date = self.lot_id.expiration_date
+        else:
+            self.expiration_date = self.expiration_date
+
+class StockMove(models.Model):
+    _inherit = "stock.move"
+
+
+    def _generate_serial_move_line_commands(self, lot_names, origin_move_line=None):
+        """Override to add a default `expiration_date` into the move lines values."""
+        as_vencimiento = self.expiration_date
+        move_lines_commands = super()._generate_serial_move_line_commands(lot_names, origin_move_line=origin_move_line)
+        if self.product_id.use_expiration_date:
+            date = fields.Datetime.today() + datetime.timedelta(days=self.product_id.expiration_time)
+            for move_line_command in move_lines_commands:
+                move_line_vals = move_line_command[2]
+                move_line_vals['expiration_date'] = move_line_vals['expiration_date']
+        return move_lines_commands
