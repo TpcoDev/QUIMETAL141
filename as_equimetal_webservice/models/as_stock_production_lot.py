@@ -43,6 +43,16 @@ class as_stock_move_line(models.Model):
         self.expiration_date = as_vencimiento
         return res
 
+    @api.depends('product_id', 'picking_type_use_create_lots')
+    def _compute_expiration_date(self):
+        pass
+        # for move_line in self:
+        #     if move_line.picking_type_use_create_lots:
+        #         if move_line.product_id.use_expiration_date:
+        #             move_line.expiration_date = fields.Datetime.today() + datetime.timedelta(days=move_line.product_id.expiration_time)
+        #         else:
+        #             move_line.expiration_date = False
+
     @api.onchange('lot_id')
     def _onchange_lot_id(self):
         if not self.picking_type_use_existing_lots or not self.product_id.use_expiration_date:
